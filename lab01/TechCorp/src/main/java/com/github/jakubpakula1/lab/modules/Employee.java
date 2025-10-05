@@ -1,0 +1,79 @@
+package com.github.jakubpakula1.lab.modules;
+
+import java.util.Objects;
+
+public class Employee {
+    private String name;
+    private String surname;
+    private String email;
+    private String company;
+    private Position position;
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getCompany() {
+        return company;
+    }
+
+    public void setCompany(String company) {
+        this.company = company;
+    }
+
+    public String getSurname() {
+        return surname;
+    }
+
+    public void setSurname(String surname) {
+        this.surname = surname;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Position getPosition() {
+        return position;
+    }
+
+    public void setPosition(Position position) {
+        this.position = position;
+    }
+
+    public String getFullName(){
+        return this.name + this.getSurname();
+    }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Employee employee = (Employee) o;
+        if(email == null || employee.email == null) return false;
+        return email.equalsIgnoreCase(employee.email);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(email == null ? null : email.toLowerCase());
+    }
+
+    @Override
+    public String toString() {
+        return "Employee{" +
+                "name='" + name + '\'' +
+                ", surname='" + surname + '\'' +
+                ", email='" + email + '\'' +
+                ", company='" + company + '\'' +
+                ", position=" + position +
+                '}';
+    }
+}
