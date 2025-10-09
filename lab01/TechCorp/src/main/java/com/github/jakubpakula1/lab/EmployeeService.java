@@ -8,6 +8,10 @@ import java.util.*;
 public class EmployeeService {
     Employee[] employees;
 
+    public EmployeeService() {
+        this.employees = new Employee[]{};
+    }
+
     public void AddEmployee(Employee employee){
         if (employee == null){
             throw new IllegalArgumentException("Employee cant be null");
@@ -65,7 +69,7 @@ public class EmployeeService {
         }
         Employee[] sorted = Arrays.copyOf(employees, employees.length);
 
-        Arrays.sort(employees, Comparator.comparing(Employee::getSurname, String.CASE_INSENSITIVE_ORDER));
+        Arrays.sort(sorted, Comparator.comparing(Employee::getSurname, String.CASE_INSENSITIVE_ORDER));
 
         return sorted;
     }
