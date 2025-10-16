@@ -1,4 +1,4 @@
-package com.github.jakubpakula1.lab.modules;
+package com.github.jakubpakula1.lab.model;
 
 import java.util.Objects;
 
@@ -8,13 +8,15 @@ public class Employee {
     private String email;
     private String company;
     private Position position;
+    private int salary;
 
-    public Employee(String name, String surname, String company, String email, Position position) {
+    public Employee(String name, String surname, String company, String email, Position position, int salary) {
         this.name = name;
         this.surname = surname;
         this.company = company;
         this.email = email;
         this.position = position;
+        this.salary = salary;
     }
 
     public String getEmail() {
@@ -57,8 +59,16 @@ public class Employee {
         this.position = position;
     }
 
+    public int getSalary() {
+        return salary;
+    }
+
+    public void setSalary(int salary) {
+        this.salary = salary;
+    }
+
     public String getFullName(){
-        return this.name + this.getSurname();
+        return this.name + " " + this.getSurname();
     }
     @Override
     public boolean equals(Object o) {
@@ -81,7 +91,8 @@ public class Employee {
                 ", surname='" + surname + '\'' +
                 ", email='" + email + '\'' +
                 ", company='" + company + '\'' +
-                ", position=" + position +
+                ", position=" + position + '\'' +
+                ", salary = " + salary +
                 '}';
     }
 }

@@ -1,4 +1,4 @@
-package com.github.jakubpakula1.lab.modules;
+package com.github.jakubpakula1.lab.model;
 
 public enum Position {
     PREZES(25000, 1),
