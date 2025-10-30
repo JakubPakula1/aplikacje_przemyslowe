@@ -3,11 +3,13 @@ package com.github.jakubpakula1.lab.service;
 import com.github.jakubpakula1.lab.model.Employee;
 import com.github.jakubpakula1.lab.model.ImportSummary;
 import com.github.jakubpakula1.lab.model.Position;
+import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
+@Service
 public class ImportService {
     private static EmployeeService employeeService;
 

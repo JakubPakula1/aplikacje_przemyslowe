@@ -43,4 +43,5 @@ public class CompanyStatistics {
                 ", bestEarningName='" + bestEarningName + '\'' +
                 '}';
     }
+
 }

@@ -10,6 +10,14 @@ public class Employee {
     private Position position;
     private int salary;
 
+    public Employee(String name, String surname, String company, String email, String position, int salary) {
+        this.name = name;
+        this.surname = surname;
+        this.company = company;
+        this.email = email;
+        this.position = Position.valueOf(position.toUpperCase());
+        this.salary = salary;
+    }
     public Employee(String name, String surname, String company, String email, Position position, int salary) {
         this.name = name;
         this.surname = surname;

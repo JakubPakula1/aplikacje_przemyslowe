@@ -3,10 +3,12 @@ package com.github.jakubpakula1.lab.service;
 import com.github.jakubpakula1.lab.model.CompanyStatistics;
 import com.github.jakubpakula1.lab.model.Employee;
 import com.github.jakubpakula1.lab.model.Position;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Service
 public class EmployeeService {
     Employee[] employees;
 
