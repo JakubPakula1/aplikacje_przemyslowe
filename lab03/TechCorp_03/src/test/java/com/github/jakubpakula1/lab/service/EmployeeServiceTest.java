@@ -5,6 +5,7 @@ import com.github.jakubpakula1.lab.model.Position;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -39,7 +40,7 @@ public class EmployeeServiceTest {
     void addEmployee_valid_succeeds() {
         Employee e1 = new Employee("Jan","Kowalski","Acme","jan@acme.com", Position.PROGRAMISTA, 8000);
         service.AddEmployee(e1);
-        Employee[] employees = service.getCompanyEmployees("Acme");
+        List<Employee> employees = service.getCompanyEmployees("Acme");
         assertThat(employees)
                 .hasSize(1)
                 .extracting(Employee::getEmail)
@@ -52,7 +53,7 @@ public class EmployeeServiceTest {
         Employee e2 = new Employee("Anna","Nowak","Acme","anna@acme.com", Position.MANAGER, 12000);
         service.AddEmployee(e1);
         service.AddEmployee(e2);
-        Employee[] employees = service.getCompanyEmployees("Acme");
+        List<Employee> employees = service.getCompanyEmployees("Acme");
         assertThat(employees).hasSize(2);
     }
 
@@ -84,7 +85,7 @@ public class EmployeeServiceTest {
     // getCompanyEmployees tests
     @Test
     void getCompanyEmployees_emptyDatabase_returnsEmpty() {
-        Employee[] result = service.getCompanyEmployees("Acme");
+        List<Employee> result = service.getCompanyEmployees("Acme");
         assertThat(result).isEmpty();
     }
 
@@ -92,7 +93,7 @@ public class EmployeeServiceTest {
     void getCompanyEmployees_nonExistingCompany_returnsEmpty() {
         Employee e1 = new Employee("A","B","CompanyA","a@a.com", Position.PROGRAMISTA, 8000);
         service.AddEmployee(e1);
-        Employee[] result = service.getCompanyEmployees("NoSuchCompany");
+        List<Employee> result = service.getCompanyEmployees("NoSuchCompany");
         assertThat(result).isEmpty();
     }
 
@@ -100,7 +101,7 @@ public class EmployeeServiceTest {
     void getCompanyEmployees_nullCompanyName_returnsEmpty() {
         Employee e1 = new Employee("A","B","CompanyA","a@a.com", Position.PROGRAMISTA, 8000);
         service.AddEmployee(e1);
-        Employee[] result = service.getCompanyEmployees(null);
+        List<Employee> result = service.getCompanyEmployees(null);
         assertThat(result).isEmpty();
     }
 
@@ -108,7 +109,7 @@ public class EmployeeServiceTest {
     void getCompanyEmployees_blankCompanyName_returnsEmpty() {
         Employee e1 = new Employee("A","B","CompanyA","a@a.com", Position.PROGRAMISTA, 8000);
         service.AddEmployee(e1);
-        Employee[] result = service.getCompanyEmployees("   ");
+        List<Employee> result = service.getCompanyEmployees("   ");
         assertThat(result).isEmpty();
     }
 
@@ -116,7 +117,7 @@ public class EmployeeServiceTest {
     void getCompanyEmployees_caseInsensitive_returnsEmployees() {
         Employee e1 = new Employee("A","B","Acme","a@a.com", Position.PROGRAMISTA, 8000);
         service.AddEmployee(e1);
-        Employee[] result = service.getCompanyEmployees("ACME");
+        List<Employee> result = service.getCompanyEmployees("ACME");
         assertThat(result).hasSize(1);
     }
 
@@ -128,7 +129,7 @@ public class EmployeeServiceTest {
         service.AddEmployee(e1);
         service.AddEmployee(e2);
         service.AddEmployee(e3);
-        Employee[] result = service.getCompanyEmployees("Acme");
+        List<Employee> result = service.getCompanyEmployees("Acme");
         assertThat(result)
                 .hasSize(2)
                 .extracting(Employee::getEmail)
@@ -138,7 +139,7 @@ public class EmployeeServiceTest {
     // getEmployeesSortedByLastName tests
     @Test
     void getEmployeesSortedByLastName_emptyDatabase_returnsEmpty() {
-        Employee[] result = service.getEmployeesSortedByLastName();
+        List<Employee> result = service.getEmployeesSortedByLastName();
         assertThat(result).isEmpty();
     }
 
@@ -146,7 +147,7 @@ public class EmployeeServiceTest {
     void getEmployeesSortedByLastName_singleEmployee_returnsSame() {
         Employee e1 = new Employee("A","B","X","a@x.com", Position.PROGRAMISTA, 8000);
         service.AddEmployee(e1);
-        Employee[] result = service.getEmployeesSortedByLastName();
+        List<Employee> result = service.getEmployeesSortedByLastName();
         assertThat(result)
                 .hasSize(1)
                 .extracting(Employee::getSurname)
@@ -161,7 +162,7 @@ public class EmployeeServiceTest {
         service.AddEmployee(e1);
         service.AddEmployee(e2);
         service.AddEmployee(e3);
-        Employee[] sorted = service.getEmployeesSortedByLastName();
+        List<Employee> sorted = service.getEmployeesSortedByLastName();
         assertThat(sorted)
                 .extracting(Employee::getSurname)
                 .containsExactly("Apple", "Mango", "Zebra");
@@ -175,7 +176,7 @@ public class EmployeeServiceTest {
         service.AddEmployee(e1);
         service.AddEmployee(e2);
         service.AddEmployee(e3);
-        Employee[] sorted = service.getEmployeesSortedByLastName();
+        List<Employee> sorted = service.getEmployeesSortedByLastName();
         assertThat(sorted)
                 .extracting(Employee::getSurname)
                 .containsExactly("apple", "xray", "Yankee");
@@ -311,7 +312,7 @@ public class EmployeeServiceTest {
     // validateSalaryConsistency tests
     @Test
     void validateSalaryConsistency_emptyDatabase_returnsEmpty() {
-        Employee[] result = service.validateSalaryConsistency();
+        List<Employee> result = service.validateSalaryConsistency();
         assertThat(result).isEmpty();
     }
 
@@ -321,7 +322,7 @@ public class EmployeeServiceTest {
         Employee e2 = new Employee("G2","Good2","C","good2@c.com", Position.MANAGER, Position.MANAGER.getBaseSalary() + 1000);
         service.AddEmployee(e1);
         service.AddEmployee(e2);
-        Employee[] inconsistent = service.validateSalaryConsistency();
+        List<Employee> inconsistent = service.validateSalaryConsistency();
         assertThat(inconsistent).isEmpty();
     }
 
@@ -331,7 +332,7 @@ public class EmployeeServiceTest {
         Employee bad = new Employee("B","Bad","C","bad@c.com", Position.MANAGER, Position.MANAGER.getBaseSalary() - 1000);
         service.AddEmployee(good);
         service.AddEmployee(bad);
-        Employee[] inconsistent = service.validateSalaryConsistency();
+        List<Employee> inconsistent = service.validateSalaryConsistency();
         assertThat(inconsistent)
                 .hasSize(1)
                 .extracting(Employee::getEmail)
@@ -346,7 +347,7 @@ public class EmployeeServiceTest {
         service.AddEmployee(good);
         service.AddEmployee(bad1);
         service.AddEmployee(bad2);
-        Employee[] inconsistent = service.validateSalaryConsistency();
+        List<Employee> inconsistent = service.validateSalaryConsistency();
         assertThat(inconsistent).hasSize(2);
     }
 
