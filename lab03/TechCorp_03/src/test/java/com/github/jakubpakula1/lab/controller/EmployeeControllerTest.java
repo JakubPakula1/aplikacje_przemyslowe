@@ -184,4 +184,63 @@ class EmployeeControllerTest {
 
         verify(employeeService).updateEmployeeStatus("john@example.com", EmploymentStatus.ON_LEAVE);
     }
+
+        @Test
+        @DisplayName("PUT /api/employees/{email} - aktualizacja zwraca 200")
+        void testUpdateEmployeeSuccess() throws Exception {
+            var updateMap = new java.util.HashMap<String, Object>();
+            updateMap.put("name", "John");
+            updateMap.put("surname", "Updated");
+            updateMap.put("email", "john.updated@example.com");
+            updateMap.put("company", "Acme");
+            updateMap.put("position", "PROGRAMISTA");
+            updateMap.put("salary", 7000);
+            updateMap.put("status", "ACTIVE");
+
+            Employee existing = mockEmployee("John", "Doe", "john@example.com", "Acme", 5000, EmploymentStatus.ACTIVE);
+            when(employeeService.getEmployeeByEmail("john@example.com")).thenReturn(existing);
+
+            Employee saved = mockEmployee("John", "Updated", "john.updated@example.com", "Acme", 7000, EmploymentStatus.ACTIVE);
+            when(employeeService.updateEmployee(eq("john@example.com"), ArgumentMatchers.any())).thenReturn(saved);
+
+            mockMvc.perform(put("/api/employees/john@example.com")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updateMap)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.email").value("john.updated@example.com"))
+                    .andExpect(jsonPath("$.surname").value("Updated"))
+                    .andExpect(jsonPath("$.salary").value(7000));
+
+            verify(employeeService).getEmployeeByEmail("john@example.com");
+            verify(employeeService).updateEmployee(eq("john@example.com"), ArgumentMatchers.any());
+        }
+
+        @Test
+        @DisplayName("PUT /api/employees/{email} - duplikat e-maila zwraca 409")
+        void testUpdateEmployeeDuplicateConflict() throws Exception {
+            var updateMap = new java.util.HashMap<String, Object>();
+            updateMap.put("name", "John");
+            updateMap.put("surname", "Doe");
+            updateMap.put("email", "existing@example.com"); // próbujemy zmienić na istniejący
+            updateMap.put("company", "Acme");
+            updateMap.put("position", "PROGRAMISTA");
+            updateMap.put("salary", 6000);
+            updateMap.put("status", "ACTIVE");
+
+            Employee existing = mockEmployee("John", "Doe", "john@example.com", "Acme", 5000, EmploymentStatus.ACTIVE);
+            when(employeeService.getEmployeeByEmail("john@example.com")).thenReturn(existing);
+
+            when(employeeService.updateEmployee(eq("john@example.com"), ArgumentMatchers.any()))
+                    .thenThrow(new DuplicateEmailException("Employee with this email already exists!"));
+
+            mockMvc.perform(put("/api/employees/john@example.com")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(updateMap)))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.message").value("Employee with this email already exists!"))
+                    .andExpect(jsonPath("$.status").value(409));
+
+            verify(employeeService).getEmployeeByEmail("john@example.com");
+            verify(employeeService).updateEmployee(eq("john@example.com"), ArgumentMatchers.any());
+        }
 }
