@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dokumenty departamentu</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .message { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background-color: #e8f5e9; color: #2e7d32; }
+        .error { background-color: #ffebee; color: #c62828; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f5f5f5; font-weight: bold; }
+        tr:hover { background-color: #f9f9f9; }
+        .form-group { margin: 15px 0; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { padding: 8px; margin-right: 10px; }
+        button { padding: 8px 16px; background-color: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #1565c0; }
+        .btn-danger { background-color: #d32f2f; }
+        .btn-danger:hover { background-color: #b71c1c; }
+        .btn-download { background-color: #388e3c; }
+        .btn-download:hover { background-color: #2e7d32; }
+        a { color: #1976d2; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .file-actions { display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Dokumenty departamentu: <span th:text="${department.name}"></span></h1>
+
+    <div th:if="${message}" class="message success" th:text="${message}"></div>
+    <div th:if="${error}" class="message error" th:text="${error}"></div>
+
+    <!-- Formularz uploadu -->
+    <div style="background-color: #f5f5f5; padding: 20px; border-radius: 4px; margin-bottom: 20px;">
+        <h2>Dodaj nowy dokument</h2>
+        <form th:action="@{/departments/documents/{id}/upload(id=${department.id})}" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="fileType">Typ dokumentu:</label>
+                <select id="fileType" name="fileType" required>
+                    <option value="">-- Wybierz typ --</option>
+                    <option th:each="type : ${fileTypes}" th:value="${type}" th:text="${type}"></option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="file">Wybierz plik:</label>
+                <input type="file" id="file" name="file" required>
+            </div>
+
+            <button type="submit">Przesłij plik</button>
+        </form>
+    </div>
+
+    <!-- Lista dokumentów -->
+    <h2>Przesłane dokumenty</h2>
+    <div th:if="${documents != null and documents.size() > 0}">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nazwa pliku</th>
+                    <th>Typ</th>
+                    <th>Data przesłania</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="doc : ${documents}">
+                    <td th:text="${doc.originalFileName}"></td>
+                    <td th:text="${doc.fileType}"></td>
+                    <td th:text="${#temporals.format(doc.uploadDate, 'yyyy-MM-dd HH:mm')}"></td>
+                    <td>
+                        <div class="file-actions">
+                            <a th:href="@{/departments/documents/{id}/download/{docId}(id=${department.id}, docId=${doc.id})}" class="btn-download">Pobierz</a>
+                            <form th:action="@{/departments/documents/{id}/delete/{docId}(id=${department.id}, docId=${doc.id})}" method="post" style="display: inline;">
+                                <button type="submit" class="btn-danger" onclick="return confirm('Czy na pewno chcesz usunąć ten plik?')">Usuń</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div th:if="${documents == null or documents.size() == 0}" style="padding: 20px; background-color: #e0e0e0; border-radius: 4px; text-align: center;">
+        <p>Brak dokumentów. Dodaj pierwszy dokument używając formularza powyżej.</p>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <a href="/departments">Powrót do listy departamentów</a>
+    </div>
+</body>
+</html>

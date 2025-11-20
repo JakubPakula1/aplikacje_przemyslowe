@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Wyszukiwanie pracowników</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1>Szukaj pracowników po nazwie firmy</h1>
+
+    <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+
+    <form th:action="@{/employees/search}" method="post">
+        <div class="form-group">
+            <label for="company">Nazwa firmy:</label>
+            <input type="text" id="company" name="company" required placeholder="Wprowadź nazwę firmy">
+        </div>
+        <button type="submit" class="btn-primary">Szukaj</button>
+        <a href="/employees" class="btn-secondary">Anuluj</a>
+    </form>
+</div>
+</body>
+</html>

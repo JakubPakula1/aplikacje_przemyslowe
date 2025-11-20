@@ -10,7 +10,10 @@ public class Employee {
     private Position position;
     private int salary;
     private EmploymentStatus status;
-    public Employee(String name, String surname, String company, String email, String position, int salary, String status) {
+    private String photoFileName;
+    private Long departmentId;
+
+    public Employee(String name, String surname, String company, String email, String position, int salary, String status, Long departmentId) {
         this.name = name;
         this.surname = surname;
         this.company = company;
@@ -18,7 +21,9 @@ public class Employee {
         this.position = Position.valueOf(position.toUpperCase());
         this.salary = salary;
         this.status = EmploymentStatus.valueOf(status.toUpperCase());
+        this.departmentId = departmentId;
     }
+
     public Employee(String name, String surname, String company, String email, Position position, int salary) {
         this.name = name;
         this.surname = surname;
@@ -26,6 +31,10 @@ public class Employee {
         this.email = email;
         this.position = position;
         this.salary = salary;
+    }
+
+    public Employee() {
+
     }
 
     public String getEmail() {
@@ -82,6 +91,22 @@ public class Employee {
 
     public void setStatus(EmploymentStatus status) {
         this.status = status;
+    }
+
+    public String getPhotoFileName() {
+        return photoFileName;
+    }
+
+    public void setPhotoFileName(String photoFileName) {
+        this.photoFileName = photoFileName;
+    }
+
+    public Long getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Long departmentId) {
+        this.departmentId = departmentId;
     }
 
     public String getFullName(){

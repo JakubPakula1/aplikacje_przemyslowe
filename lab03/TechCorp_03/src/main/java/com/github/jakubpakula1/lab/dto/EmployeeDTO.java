@@ -12,11 +12,12 @@ public class EmployeeDTO {
     private Position position;
     private int salary;
     private EmploymentStatus status;
+    private Long departmentId;
 
     public EmployeeDTO() {}
 
     public EmployeeDTO(String firstName, String lastName, String email, String company,
-                       Position position, int salary, EmploymentStatus status) {
+                       Position position, int salary, EmploymentStatus status, Long departmentId) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -24,6 +25,7 @@ public class EmployeeDTO {
         this.position = position;
         this.salary = salary;
         this.status = status;
+        this.departmentId = departmentId;
     }
 
     public String getName() { return firstName; }
@@ -46,6 +48,14 @@ public class EmployeeDTO {
 
     public EmploymentStatus getStatus() { return status; }
     public void setStatus(EmploymentStatus status) { this.status = status; }
+
+    public Long getDepartmentId() {
+        return departmentId;
+    }
+
+    public void setDepartmentId(Long departmentId) {
+        this.departmentId = departmentId;
+    }
 
     @Override
     public String toString() {

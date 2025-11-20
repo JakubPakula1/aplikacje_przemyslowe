@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Edytuj pracownika</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1>Edytuj pracownika</h1>
+
+    <div th:if="${error}" class="alert-error" th:text="${error}"></div>
+
+    <form th:action="@{/employees/edit}" th:object="${employee}" method="post" enctype="multipart/form-data">
+        <div th:if="${#fields.hasAnyErrors()}" class="alert alert-error">
+            <strong>Błędy walidacji:</strong>
+            <ul>
+                <li th:each="err : ${#fields.allErrors()}" th:text="${err}"></li>
+            </ul>
+        </div>
+
+        <div class="form-group">
+            <label for="name">Imię *</label>
+            <input type="text" id="name" th:field="*{name}"
+                   th:class="${#fields.hasErrors('name') ? 'error' : ''}">
+            <span class="error-message" th:if="${#fields.hasErrors('name')}"
+                  th:errors="*{name}"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="surname">Nazwisko *</label>
+            <input type="text" id="surname" th:field="*{surname}"
+                   th:class="${#fields.hasErrors('surname') ? 'error' : ''}">
+            <span class="error-message" th:if="${#fields.hasErrors('surname')}"
+                  th:errors="*{surname}"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Email *</label>
+            <input type="email" id="email" th:field="*{email}"
+                   th:class="${#fields.hasErrors('email') ? 'error' : ''}">
+            <span class="error-message" th:if="${#fields.hasErrors('email')}"
+                  th:errors="*{email}"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="company">Firma *</label>
+            <input type="text" id="company" th:field="*{company}"
+                   th:class="${#fields.hasErrors('company') ? 'error' : ''}">
+            <span class="error-message" th:if="${#fields.hasErrors('company')}"
+                  th:errors="*{company}"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="position">Stanowisko</label>
+            <select id="position" th:field="*{position}">
+                <option value="">-- Wybierz stanowisko --</option>
+                <option th:each="pos : ${positions}" th:value="${pos}" th:text="${pos}"></option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="salary">Wynagrodzenie *</label>
+            <input type="number" id="salary" th:field="*{salary}"
+                   th:class="${#fields.hasErrors('salary') ? 'error' : ''}">
+            <span class="error-message" th:if="${#fields.hasErrors('salary')}"
+                  th:errors="*{salary}"></span>
+        </div>
+
+        <div class="form-group">
+            <label for="status">Status zatrudnienia</label>
+            <select id="status" th:field="*{status}">
+                <option value="">-- Wybierz status --</option>
+                <option th:each="status : ${employmentStatuses}" th:value="${status}" th:text="${status}"></option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="department">Dział</label>
+            <select id="department" th:field="*{departmentId}">
+                <option value="">-- Wybierz dział --</option>
+                <option th:each="dept : ${departments}" th:value="${dept.id}" th:text="${dept.name}"></option>
+            </select>
+        </div>
+        <div class="button-group">
+            <button type="submit" class="btn btn-primary">Zapisz zmiany</button>
+            <a href="/employees" class="btn btn-secondary">Anuluj</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

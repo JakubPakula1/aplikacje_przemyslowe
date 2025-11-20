@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title} ?: 'Zarządzanie Pracownikami'">Zarządzanie Pracownikami</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <a th:href="@{/}">Zarządzanie Pracownikami</a>
+            </div>
+            <ul class="navbar-menu">
+                <li><a th:href="@{/employees}">Pracownicy</a></li>
+                <li><a th:href="@{/departments}">Departamenty</a></li>
+                <li><a th:href="@{/statistics}">Statystyki</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="container">
+            <div th:if="${successMessage}" class="alert alert-success">
+                <span th:text="${successMessage}"></span>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-error">
+                <span th:text="${errorMessage}"></span>
+            </div>
+
+            <div layout:fragment="content"></div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Zarządzanie Pracownikami. Wszystkie prawa zastrzeżone.</p>
+    </footer>
+</body>
+</html>

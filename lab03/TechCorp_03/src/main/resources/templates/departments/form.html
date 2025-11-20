@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Formularz departamentu</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <!-- Formularz dodawania -->
+    <div th:if="${department.id == null}">
+        <h1>Dodaj nowy departament</h1>
+        <form th:action="@{/departments/add}" th:object="${department}" method="post">
+            <div class="form-group">
+                <label for="name">Nazwa departamentu</label>
+                <input type="text" id="name" th:field="*{name}" required placeholder="Wprowadź nazwę departamentu">
+            </div>
+
+            <div class="form-group">
+                <label for="location">Lokalizacja</label>
+                <input type="text" id="location" th:field="*{location}" required placeholder="Wprowadź lokalizację">
+            </div>
+            <div class="form-group">
+                <label for="budget">Budżet</label>
+                <input type="number" id="budget" th:field="*{budget}" step="0.01" required placeholder="Wprowadź budżet">
+            </div>
+
+            <div class="form-group">
+                <label for="managerEmail">Manager</label>
+                <select id="managerEmail" th:field="*{managerEmail}" required>
+                    <option value="">Wybierz managera</option>
+                    <option th:each="manager : ${possibleManagers}"
+                            th:value="${manager.email}"
+                            th:text="${manager.name} + ' ' + ${manager.surname} + ' (' + ${manager.email} + ')'">
+                    </option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-primary">Dodaj departament</button>
+            <a href="/departments" class="btn-secondary">Anuluj</a>
+        </form>
+    </div>
+
+    <!-- Formularz edycji -->
+    <div th:if="${department.id != null}">
+        <h1>Edytuj departament</h1>
+        <form th:action="@{/departments/edit}" th:object="${department}" method="post">
+            <input type="hidden" name="id" th:value="${department.id}">
+
+            <div class="form-group">
+                <label for="name2">Nazwa departamentu</label>
+                <input type="text" id="name2" th:field="*{name}" required placeholder="Wprowadź nazwę departamentu">
+            </div>
+
+            <div class="form-group">
+                <label for="location2">Lokalizacja</label>
+                <input type="text" id="location2" th:field="*{location}" required placeholder="Wprowadź lokalizację">
+            </div>
+
+            <div class="form-group">
+                <label for="budget2">Budżet</label>
+                <input type="number" id="budget2" th:field="*{budget}" step="0.01" required placeholder="Wprowadź budżet">
+            </div>
+
+            <div class="form-group">
+                <label for="managerEmail2">Manager</label>
+                <select id="managerEmail2" th:field="*{managerEmail}" required>
+                    <option value="">Wybierz managera</option>
+                    <option th:each="manager : ${possibleManagers}"
+                            th:value="${manager.email}"
+                            th:text="${manager.name} + ' ' + ${manager.surname} + ' (' + ${manager.email} + ')'">
+                    </option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-primary">Zaktualizuj departament</button>
+            <a href="/departments" class="btn-secondary">Anuluj</a>
+        </form>
+    </div>
+</div>
+</body>
+</html>

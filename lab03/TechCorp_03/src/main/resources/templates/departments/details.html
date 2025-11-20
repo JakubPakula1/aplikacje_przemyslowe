@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}" lang="pl">
+<head>
+    <title>Szczegóły departamentu</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1 th:text="${department.name}"></h1>
+
+    <div class="department-details">
+        <p><strong>ID:</strong> <span th:text="${department.id}"></span></p>
+        <p><strong>Lokalizacja:</strong> <span th:text="${department.location}"></span></p>
+        <p><strong>Budżet:</strong> <span th:text="${#numbers.formatDecimal(department.budget, 1, 2)}"></span> PLN</p>
+        <p><strong>Email managera:</strong> <span th:text="${department.managerEmail}"></span></p>
+    </div>
+
+    <div class="department-actions">
+        <a href="/departments" class="btn-secondary">Wróć do listy</a>
+        <a th:href="@{/departments/edit/{id}(id=${department.id})}" class="btn-primary">Edytuj</a>
+        <form th:action="@{/departments/delete/{id}(id=${department.id})}" method="post" class="form-delete">
+            <input type="hidden" name="_method" value="DELETE">
+            <button type="submit" class="btn-danger" onclick="return confirm('Czy na pewno chcesz usunąć ten departament?')">Usuń</button>
+        </form>
+        <a th:href="@{/departments/documents/{id}(id=${department.id})}" class="btn-primary">Dokumenty</a>
+    </div>
+
+    <h2>Pracownicy w tym departamencie</h2>
+
+    <div th:if="${departmentEmployees.isEmpty()}" class="alert-info">
+        <p>Brak pracowników przypisanych do tego departamentu.</p>
+    </div>
+
+    <table th:unless="${departmentEmployees.isEmpty()}">
+        <thead>
+            <tr>
+                <th>Imię</th>
+                <th>Nazwisko</th>
+                <th>Email</th>
+                <th>Pozycja</th>
+                <th>Status zatrudnienia</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="employee : ${departmentEmployees}">
+                <td th:text="${employee.name}"></td>
+                <td th:text="${employee.surname}"></td>
+                <td th:text="${employee.email}"></td>
+                <td th:text="${employee.position}"></td>
+                <td th:text="${employee.status}"></td>
+                <td>
+                    <a th:href="@{/employees/edit/{email}(email=${employee.email})}" class="btn-small">Edytuj</a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

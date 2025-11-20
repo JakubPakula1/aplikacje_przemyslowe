@@ -70,6 +70,7 @@ public class EmployeeService {
                 e.setPosition(updated.getPosition());
                 e.setSalary(updated.getSalary());
                 e.setStatus(updated.getStatus());
+                e.setDepartmentId(updated.getDepartmentId());
 
                 return e;
             }
@@ -232,5 +233,21 @@ public class EmployeeService {
                 .filter(Objects::nonNull)
                 .filter(e -> e.getStatus() == status)
                 .collect(Collectors.toList());
+    }
+
+    public List<Employee> getEmployeesManagerAndAbove(){
+        Map<String, List<Employee>> employees = getEmployeesByPosition();
+        return employees.values()
+                .stream()
+                .flatMap(List::stream)
+                .filter(employee -> {
+                    Position position = employee.getPosition();
+                    return position.getHierarchyLevel() <= 3;
+                })
+                .toList();
+    }
+
+    public List<Employee> getEmployeesByDepartment(Long departmentId){
+        return this.employees.stream().filter(employee -> Objects.equals(employee.getDepartmentId(), departmentId)).toList();
     }
 }

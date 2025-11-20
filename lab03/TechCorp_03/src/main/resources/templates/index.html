@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Strona główna</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="hero">
+        <h1>Zarządzanie pracownikami</h1>
+        <p>System do efektywnego zarządzania bazą pracowników</p>
+    </div>
+
+    <div class="dashboard">
+        <div class="card">
+            <h2>Pracownicy</h2>
+            <p>Przeglądaj i zarządzaj listą pracowników</p>
+            <a href="/employees" class="btn-primary">Przejdź do listy</a>
+        </div>
+
+        <div class="card">
+            <h2>Dodaj pracownika</h2>
+            <p>Zarejestruj nowego pracownika w systemie</p>
+            <a href="/employees/add" class="btn-primary">Dodaj</a>
+        </div>
+
+        <div class="card">
+            <h2>Szukaj</h2>
+            <p>Wyszukaj pracownika po nazwie firmy</p>
+            <a href="/employees/search" class="btn-primary">Szukaj</a>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h3>Funkcjonalności</h3>
+        <ul>
+            <li>Przeglądanie listy pracowników</li>
+            <li>Dodawanie nowych pracowników</li>
+            <li>Edycja danych pracowników</li>
+            <li>Usuwanie pracowników</li>
+            <li>Wyszukiwanie po firmie</li>
+            <li>Generowanie raportów</li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <title>Wyniki wyszukiwania</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <h1>Wyniki wyszukiwania</h1>
+
+    <div class="search-info">
+        <p>Szukano pracowników z firmy: <strong th:text="${company}"></strong></p>
+        <p th:text="'Znaleziono ' + ${#lists.size(employees)} + ' wyników'"></p>
+    </div>
+
+    <div th:if="${#lists.isEmpty(employees)}" class="alert-info">
+        <p>Brak pracowników dla podanego kryterium wyszukiwania.</p>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(employees)}">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Imię i nazwisko</th>
+                    <th>Firma</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="employee : ${employees}">
+                    <td th:text="${employee.email}"></td>
+                    <td th:text="${employee.name}"></td>
+                    <td th:text="${employee.company}"></td>
+                    <td>
+                        <a th:href="@{/employees/edit/{email}(email=${employee.email})}" class="btn-primary">Edytuj</a>
+                        <form th:action="@{/employees/delete/{email}(email=${employee.email})}" method="post" class="form-delete">
+                            <button type="submit" class="btn-danger btn-delete" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
+                        </form>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <a href="/employees" class="btn-secondary">Wróć do listy</a>
+</div>
+</body>
+</html>

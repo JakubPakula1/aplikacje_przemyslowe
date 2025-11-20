@@ -64,7 +64,8 @@ public class EmployeeController {
                 employeeDTO.getCompany(),
                 positionStr,
                 employeeDTO.getSalary(),
-                statusStr
+                statusStr,
+                employeeDTO.getDepartmentId()
         );
 
         Employee created = this.employeeService.AddEmployee(toCreate);
@@ -93,6 +94,7 @@ public class EmployeeController {
         int salary = employeeDTO.getSalary() != 0 ? employeeDTO.getSalary() : existing.getSalary();
         String statusStr = employeeDTO.getStatus() != null ? employeeDTO.getStatus().name()
                 : (existing.getStatus() == null ? null : existing.getStatus().name());
+        Long departmentId = employeeDTO.getDepartmentId() != null ? employeeDTO.getDepartmentId() : existing.getDepartmentId();
 
         Employee updated = new Employee(
                 name,
@@ -101,7 +103,8 @@ public class EmployeeController {
                 email,
                 positionStr,
                 salary,
-                statusStr
+                statusStr,
+                departmentId
         );
 
         Employee saved = this.employeeService.updateEmployee(email, updated);
@@ -152,7 +155,8 @@ public class EmployeeController {
                 e.getCompany(),
                 e.getPosition(),
                 e.getSalary(),
-                e.getStatus()
+                e.getStatus(),
+                e.getDepartmentId()
         );
 }
 }
