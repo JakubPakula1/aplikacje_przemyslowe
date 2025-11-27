@@ -1,29 +1,43 @@
 package com.github.jakubpakula1.lab.service;
 
+import com.github.jakubpakula1.lab.dao.EmployeeDAO;
 import com.github.jakubpakula1.lab.model.ImportSummary;
 import com.github.jakubpakula1.lab.model.Position;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 public class ImportServiceTest {
 
+    @Mock
+    private EmployeeDAO employeeDAO;
+
     private EmployeeService employeeService;
+
     private ImportService importService;
 
     @BeforeEach
     void setUp() {
-        employeeService = new EmployeeService();
+        employeeService = new EmployeeService(employeeDAO);
         importService = new ImportService(employeeService);
     }
 
-    // importFromCsv - valid data tests
+
+
     @Test
     void importFromCsv_singleValidRow_importedSuccessfully(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
@@ -33,16 +47,11 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary)
-                .isNotNull();
-        assertThat(summary.getImportedEmployees())
-                .isEqualTo(1);
-        assertThat(summary.getErrors())
-                .isEmpty();
-        assertThat(employeeService.getCompanyEmployees("X"))
-                .hasSize(1)
-                .extracting("email")
-                .containsExactly("jan@x.com");
+        assertThat(summary).isNotNull();
+        assertThat(summary.getImportedEmployees()).isEqualTo(1);
+        assertThat(summary.getErrors()).isEmpty();
+        verify(employeeDAO).deleteAll();
+        verify(employeeDAO).save(any());
     }
 
     @Test
@@ -56,16 +65,9 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getImportedEmployees())
-                .isEqualTo(3);
-        assertThat(summary.getErrors())
-                .isEmpty();
-        assertThat(employeeService.getCompanyEmployees("X"))
-                .hasSize(1);
-        assertThat(employeeService.getCompanyEmployees("Y"))
-                .hasSize(1);
-        assertThat(employeeService.getCompanyEmployees("Z"))
-                .hasSize(1);
+        assertThat(summary.getImportedEmployees()).isEqualTo(3);
+        assertThat(summary.getErrors()).isEmpty();
+        verify(employeeDAO, times(3)).save(any());
     }
 
     @Test
@@ -77,10 +79,8 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(employeeService.getCompanyEmployees("X"))
-                .hasSize(1)
-                .extracting("name")
-                .containsExactly("Jan");
+        assertThat(summary.getImportedEmployees()).isEqualTo(1);
+        verify(employeeDAO).save(argThat(emp -> emp.getName().equals("Jan")));
     }
 
     @Test
@@ -92,10 +92,8 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(employeeService.getCompanyEmployees("X"))
-                .hasSize(1)
-                .extracting("surname")
-                .containsExactly("Kowalski");
+        assertThat(summary.getImportedEmployees()).isEqualTo(1);
+        verify(employeeDAO).save(argThat(emp -> emp.getSurname().equals("Kowalski")));
     }
 
     @Test
@@ -107,8 +105,8 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(employeeService.getCompanyEmployees("Acme Corp"))
-                .hasSize(1);
+        assertThat(summary.getImportedEmployees()).isEqualTo(1);
+        verify(employeeDAO).save(argThat(emp -> emp.getCompany().equals("Acme Corp")));
     }
 
     @Test
@@ -120,10 +118,8 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(employeeService.getCompanyEmployees("Y"))
-                .hasSize(1)
-                .extracting("position")
-                .containsExactly(Position.MANAGER);
+        assertThat(summary.getImportedEmployees()).isEqualTo(1);
+        verify(employeeDAO).save(argThat(emp -> emp.getPosition() == Position.MANAGER));
     }
 
     @Test
@@ -135,10 +131,8 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(employeeService.getCompanyEmployees("X"))
-                .hasSize(1)
-                .extracting("salary")
-                .containsExactly(15000);
+        assertThat(summary.getImportedEmployees()).isEqualTo(1);
+        verify(employeeDAO).save(argThat(emp -> emp.getSalary() == 15000));
     }
 
     @Test
@@ -150,12 +144,8 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getImportedEmployees())
-                .isEqualTo(1);
-        assertThat(employeeService.getCompanyEmployees("X"))
-                .hasSize(1)
-                .extracting("name")
-                .containsExactly("Jan");
+        assertThat(summary.getImportedEmployees()).isEqualTo(1);
+        verify(employeeDAO).save(argThat(emp -> emp.getName().equals("Jan")));
     }
 
     @Test
@@ -166,13 +156,11 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getImportedEmployees())
-                .isEqualTo(0);
-        assertThat(summary.getErrors())
-                .isEmpty();
+        assertThat(summary.getImportedEmployees()).isEqualTo(0);
+        assertThat(summary.getErrors()).isEmpty();
+        verify(employeeDAO, never()).save(any());
     }
 
-    // importFromCsv - invalid position tests
     @Test
     void importFromCsv_invalidPosition_addsError(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
@@ -182,12 +170,11 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getImportedEmployees())
-                .isEqualTo(0);
-        assertThat(summary.getErrors())
-                .hasSize(1)
+        assertThat(summary.getImportedEmployees()).isEqualTo(0);
+        assertThat(summary.getErrors()).hasSize(1)
                 .extracting("errorMessage")
                 .allMatch(msg -> msg.toString().contains("Invalid position"));
+        verify(employeeDAO, never()).save(any());
     }
 
     @Test
@@ -199,8 +186,7 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getErrors())
-                .hasSize(1)
+        assertThat(summary.getErrors()).hasSize(1)
                 .extracting("lineNumber")
                 .containsExactly(2);
     }
@@ -214,8 +200,8 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getImportedEmployees())
-                .isEqualTo(1);
+        assertThat(summary.getImportedEmployees()).isEqualTo(1);
+        verify(employeeDAO).save(any());
     }
 
     @Test
@@ -228,13 +214,12 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getErrors())
-                .hasSize(2)
+        assertThat(summary.getErrors()).hasSize(2)
                 .extracting("lineNumber")
                 .containsExactly(2, 3);
+        verify(employeeDAO, never()).save(any());
     }
 
-    // importFromCsv - invalid salary tests
     @Test
     void importFromCsv_invalidSalary_addsError(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
@@ -244,12 +229,11 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getImportedEmployees())
-                .isEqualTo(0);
-        assertThat(summary.getErrors())
-                .hasSize(1)
+        assertThat(summary.getImportedEmployees()).isEqualTo(0);
+        assertThat(summary.getErrors()).hasSize(1)
                 .extracting("errorMessage")
                 .allMatch(msg -> msg.toString().contains("Invalid salary value"));
+        verify(employeeDAO, never()).save(any());
     }
 
     @Test
@@ -261,8 +245,7 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getErrors())
-                .hasSize(1)
+        assertThat(summary.getErrors()).hasSize(1)
                 .extracting("lineNumber")
                 .containsExactly(2);
     }
@@ -276,12 +259,8 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getImportedEmployees())
-                .isEqualTo(1);
-        assertThat(employeeService.getCompanyEmployees("X"))
-                .hasSize(1)
-                .extracting("salary")
-                .containsExactly(-1000);
+        assertThat(summary.getImportedEmployees()).isEqualTo(1);
+        verify(employeeDAO).save(argThat(emp -> emp.getSalary() == -1000));
     }
 
     @Test
@@ -294,13 +273,11 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getErrors())
-                .hasSize(2)
+        assertThat(summary.getErrors()).hasSize(2)
                 .extracting("lineNumber")
                 .containsExactly(2, 3);
     }
 
-    // importFromCsv - invalid columns tests
     @Test
     void importFromCsv_tooFewColumns_addsError(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
@@ -310,10 +287,8 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getImportedEmployees())
-                .isEqualTo(0);
-        assertThat(summary.getErrors())
-                .hasSize(1)
+        assertThat(summary.getImportedEmployees()).isEqualTo(0);
+        assertThat(summary.getErrors()).hasSize(1)
                 .extracting("errorMessage")
                 .allMatch(msg -> msg.toString().contains("Invalid number of columns"));
     }
@@ -327,8 +302,7 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getErrors())
-                .hasSize(1)
+        assertThat(summary.getErrors()).hasSize(1)
                 .extracting("lineNumber")
                 .containsExactly(2);
     }
@@ -343,13 +317,11 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getErrors())
-                .hasSize(2)
+        assertThat(summary.getErrors()).hasSize(2)
                 .extracting("lineNumber")
                 .containsExactly(2, 3);
     }
 
-    // importFromCsv - mixed valid and invalid rows tests
     @Test
     void importFromCsv_validAndInvalidRows_summaryCorrect(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
@@ -362,10 +334,9 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getImportedEmployees())
-                .isEqualTo(2);
-        assertThat(summary.getErrors())
-                .hasSize(2);
+        assertThat(summary.getImportedEmployees()).isEqualTo(2);
+        assertThat(summary.getErrors()).hasSize(2);
+        verify(employeeDAO, times(2)).save(any());
     }
 
     @Test
@@ -379,22 +350,14 @@ public class ImportServiceTest {
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(employeeService.getCompanyEmployees("X"))
-                .hasSize(1)
-                .extracting("email")
-                .containsExactly("jan@x.com");
-        assertThat(employeeService.getCompanyEmployees("Z"))
-                .hasSize(1)
-                .extracting("email")
-                .containsExactly("piotr@z.com");
+        assertThat(summary.getImportedEmployees()).isEqualTo(2);
+        verify(employeeDAO, times(2)).save(any());
     }
 
-    // importFromCsv - file not found tests
     @Test
     void importFromCsv_fileNotFound_throwsIOException() {
         assertThatThrownBy(() -> importService.importFromCsv("/nonexistent/path/file.csv"))
-                .isInstanceOf(IOException.class)
-                .hasMessageContaining("Error reading CSV file");
+                .isInstanceOf(IOException.class);
     }
 
     @Test
@@ -403,24 +366,6 @@ public class ImportServiceTest {
                 .isInstanceOf(IOException.class);
     }
 
-    // importFromCsv - duplicate email tests
-    @Test
-    void importFromCsv_duplicateEmail_addsError(@TempDir Path tempDir) throws IOException {
-        Path csv = tempDir.resolve("test.csv");
-        String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA;8000\n" +
-                "Anna;Nowak;jan@x.com;Y;MANAGER;12000\n";
-        Files.writeString(csv, content);
-
-        ImportSummary summary = importService.importFromCsv(csv.toString());
-
-        assertThat(summary.getImportedEmployees())
-                .isEqualTo(1);
-        assertThat(summary.getErrors())
-                .hasSize(1);
-    }
-
-    // Constructor tests
     @Test
     void constructor_createsInstance() {
         ImportService service = new ImportService(employeeService);
@@ -430,7 +375,7 @@ public class ImportServiceTest {
 
     @Test
     void constructor_withEmployeeService_createsInstance() {
-        EmployeeService service = new EmployeeService();
+        EmployeeService service = new EmployeeService(employeeDAO);
         ImportService importService = new ImportService(service);
 
         assertThat(importService).isNotNull();

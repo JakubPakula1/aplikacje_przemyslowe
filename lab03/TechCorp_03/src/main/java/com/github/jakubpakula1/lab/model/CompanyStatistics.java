@@ -1,14 +1,24 @@
 package com.github.jakubpakula1.lab.model;
 
 public class CompanyStatistics {
+    private String company;
     private int numberOfEmployees;
     private double averageSalary;
     private String bestEarningName;
 
-    public CompanyStatistics(int numberOfEmployees, double averageSalary, String bestEarningName) {
+    public CompanyStatistics(String company, int numberOfEmployees, double averageSalary, String bestEarningName) {
+        this.company = company;
         this.numberOfEmployees = numberOfEmployees;
         this.averageSalary = averageSalary;
         this.bestEarningName = bestEarningName;
+    }
+
+    public String getCompany() {
+        return company;
+    }
+
+    public void setCompany(String company) {
+        this.company = company;
     }
 
     public int getNumberOfEmployees() {
@@ -38,7 +48,8 @@ public class CompanyStatistics {
     @Override
     public String toString() {
         return "CompanyStatistics{" +
-                "numberOfEmployees=" + numberOfEmployees +
+                "company='" + company + '\'' +
+                ", numberOfEmployees=" + numberOfEmployees +
                 ", averageSalary=" + averageSalary +
                 ", bestEarningName='" + bestEarningName + '\'' +
                 '}';

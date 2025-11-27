@@ -5,6 +5,7 @@ import com.github.jakubpakula1.lab.model.EmploymentStatus;
 import com.github.jakubpakula1.lab.model.ImportSummary;
 import com.github.jakubpakula1.lab.model.Position;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -20,13 +21,14 @@ import java.io.IOException;
 
 @Service
 public class ImportService {
-    private static EmployeeService employeeService;
+    private final EmployeeService employeeService;
 
     public ImportService(EmployeeService employeeService) {
         this.employeeService = employeeService;
     }
-
+    @Transactional
     public ImportSummary importFromCsv(String filePath) throws IOException {
+        employeeService.deleteAllEmployees();
         ImportSummary summary = new ImportSummary();
         int importedEmployees = 0;
         int lineNumber = 0;

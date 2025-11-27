@@ -1,97 +1,92 @@
 package com.github.jakubpakula1.lab.service;
 
+import com.github.jakubpakula1.lab.dao.EmployeeDAO;
 import com.github.jakubpakula1.lab.dto.CompanyStatisticsDTO;
 import com.github.jakubpakula1.lab.model.CompanyStatistics;
 import com.github.jakubpakula1.lab.model.Employee;
 import com.github.jakubpakula1.lab.model.EmploymentStatus;
 import com.github.jakubpakula1.lab.model.Position;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class EmployeeService {
-    private final List<Employee> employees;
+    private final EmployeeDAO employeeDAO;
 
-    public EmployeeService() {
-        this.employees = new ArrayList<>();
+    public EmployeeService(EmployeeDAO employeeDAO) {
+        this.employeeDAO = employeeDAO;
     }
 
     public List<Employee> getEmployees(){
-        return this.employees;
+        return employeeDAO.findAll();
     }
 
     public Employee getEmployeeByEmail(String email) {
         if (email == null || email.isBlank()) return null;
-        return employees.stream()
-                .filter(Objects::nonNull)
-                .filter(e -> email.equalsIgnoreCase(e.getEmail()))
-                .findAny()
-                .orElse(null);
+        return employeeDAO.findByEmail(email.toLowerCase()).orElse(null);
     }
 
     public Employee AddEmployee(Employee employee) {
         if (employee == null) {
             throw new IllegalArgumentException("Employee can't be null");
         }
-        boolean exists = employees.stream()
-                .filter(Objects::nonNull)
-                .anyMatch(e -> e.equals(employee));
-        if (exists) {
+        Optional<Employee> existing = employeeDAO.findByEmail(employee.getEmail());
+        if (existing.isPresent()) {
             throw new IllegalArgumentException("Employee with this email already exists!");
         }
-        employees.add(employee);
+        if (employee.getStatus() == null) {
+            employee.setStatus(EmploymentStatus.ACTIVE);
+        }
 
+        employeeDAO.save(employee);
         return employee;
     }
 
     public Employee updateEmployee(String email, Employee updated) {
         if (email == null || email.isBlank() || updated == null) return null;
 
-        for (int i = 0; i < employees.size(); i++) {
-            Employee e = employees.get(i);
-            if (e != null && email.equalsIgnoreCase(e.getEmail())) {
+        Optional<Employee> existing = employeeDAO.findByEmail(email);
+        if (existing.isEmpty()) return null;
 
-                String newEmail = updated.getEmail();
-                if (newEmail != null && !newEmail.equalsIgnoreCase(email)) {
-                    boolean exists = employees.stream()
-                            .filter(Objects::nonNull)
-                            .anyMatch(emp -> newEmail.equalsIgnoreCase(emp.getEmail()));
-                    if (exists) {
-                        throw new IllegalArgumentException("Employee with this email already exists!");
-                    }
-                }
+        Employee employee = existing.get();
 
-                e.setName(updated.getName());
-                e.setSurname(updated.getSurname());
-                e.setCompany(updated.getCompany());
-                e.setEmail(updated.getEmail());
-                e.setPosition(updated.getPosition());
-                e.setSalary(updated.getSalary());
-                e.setStatus(updated.getStatus());
-                e.setDepartmentId(updated.getDepartmentId());
-
-                return e;
+        String newEmail = updated.getEmail();
+        if (newEmail != null && !newEmail.equalsIgnoreCase(email)) {
+            Optional<Employee> emailExists = employeeDAO.findByEmail(newEmail);
+            if (emailExists.isPresent()) {
+                throw new IllegalArgumentException("Employee with this email already exists!");
             }
         }
-        return null;
+
+        employee.setName(updated.getName());
+        employee.setSurname(updated.getSurname());
+        employee.setCompany(updated.getCompany());
+        employee.setEmail(updated.getEmail());
+        employee.setPosition(updated.getPosition());
+        employee.setSalary(updated.getSalary());
+        employee.setStatus(updated.getStatus());
+        employee.setDepartmentId(updated.getDepartmentId());
+        employee.setPhotoFileName(updated.getPhotoFileName());
+
+        employeeDAO.save(employee);
+        return employee;
     }
 
     public boolean deleteEmployee(String email) {
         if (email == null || email.isBlank()) return false;
-        Iterator<Employee> it = employees.iterator();
-        while (it.hasNext()) {
-            Employee e = it.next();
-            if (e != null && email.equalsIgnoreCase(e.getEmail())) {
-                it.remove();
-                return true;
-            }
-        }
-        return false;
+
+        Optional<Employee> existing = employeeDAO.findByEmail(email.toLowerCase());
+        if (existing.isEmpty()) return false;
+
+        employeeDAO.delete(email);
+        return true;
     }
 
     public void DisplayWorkers() {
+        List<Employee> employees = getEmployees();
         if (employees.isEmpty()) {
             System.out.println("There aren't any employees in database.");
             return;
@@ -107,28 +102,28 @@ public class EmployeeService {
 
     public List<Employee> getCompanyEmployees(String company) {
         if (company == null || company.isBlank()) return Collections.emptyList();
-        return employees.stream()
+        return getEmployees().stream()
                 .filter(Objects::nonNull)
                 .filter(e -> company.equalsIgnoreCase(e.getCompany()))
                 .collect(Collectors.toList());
     }
 
     public List<Employee> getEmployeesSortedByLastName() {
-        return employees.stream()
+        return getEmployees().stream()
                 .filter(Objects::nonNull)
                 .sorted(Comparator.comparing(Employee::getSurname, String.CASE_INSENSITIVE_ORDER))
                 .collect(Collectors.toList());
     }
 
     public Map<String, List<Employee>> getEmployeesByPosition() {
-        return employees.stream()
+        return getEmployees().stream()
                 .filter(Objects::nonNull)
                 .filter(e -> e.getPosition() != null)
                 .collect(Collectors.groupingBy(e -> e.getPosition().name()));
     }
 
     public Map<String, Integer> getPositionStatistics() {
-        return employees.stream()
+        return getEmployees().stream()
                 .filter(Objects::nonNull)
                 .filter(e -> e.getPosition() != null)
                 .collect(Collectors.groupingBy(e -> e.getPosition().name(), Collectors.summingInt(e -> 1)));
@@ -139,7 +134,7 @@ public class EmployeeService {
     }
 
     public double getAverageSalary(String company) {
-        return employees.stream()
+        return getEmployees().stream()
                 .filter(Objects::nonNull)
                 .filter(e -> company == null || company.isBlank() || company.equalsIgnoreCase(e.getCompany()))
                 .mapToInt(Employee::getSalary)
@@ -148,22 +143,22 @@ public class EmployeeService {
     }
 
     public Map<String, Integer> getStatusDistribution() {
-        return employees.stream()
+        return getEmployees().stream()
                 .filter(Objects::nonNull)
                 .map(Employee::getStatus)
                 .filter(Objects::nonNull)
-                .collect(Collectors.groupingBy(status -> status.name(), Collectors.summingInt(s -> 1)));
+                .collect(Collectors.groupingBy(Enum::name, Collectors.summingInt(s -> 1)));
     }
 
     public Optional<Employee> getHighestPaidEmployee() {
-        return employees.stream()
+        return getEmployees().stream()
                 .filter(Objects::nonNull)
                 .filter(e -> e.getPosition() != null)
                 .max(Comparator.comparingDouble(e -> e.getPosition().getBaseSalary()));
     }
 
     public List<Employee> validateSalaryConsistency() {
-        return employees.stream()
+        return getEmployees().stream()
                 .filter(Objects::nonNull)
                 .filter(e -> e.getPosition() != null)
                 .filter(e -> e.getSalary() < e.getPosition().getBaseSalary())
@@ -171,28 +166,36 @@ public class EmployeeService {
     }
 
     public Map<String, CompanyStatistics> getCompanyStatistics() {
-        return employees.stream()
-                .filter(Objects::nonNull)
-                .filter(e -> e.getCompany() != null && !e.getCompany().isBlank())
-                .collect(Collectors.groupingBy(
-                        Employee::getCompany,
-                        Collectors.collectingAndThen(Collectors.toList(), list -> {
-                            int count = list.size();
-                            double avg = list.stream().mapToDouble(Employee::getSalary).average().orElse(0.0);
-                            String best = list.stream().max(Comparator.comparingInt(Employee::getSalary))
-                                    .map(Employee::getFullName).orElse("");
-                            return new CompanyStatistics(count, avg, best);
-                        })
+        return employeeDAO.getCompanyStatistics().stream()
+                .collect(Collectors.toMap(
+                        CompanyStatistics::getCompany,
+                        stat -> stat
                 ));
     }
+
+    public Optional<CompanyStatistics> getCompanyStatistics(String company) {
+        if (company == null || company.isBlank()) {
+            return Optional.empty();
+        }
+
+        return employeeDAO.getCompanyStatistics().stream()
+                .filter(stat -> stat.getCompany() != null && stat.getCompany().equalsIgnoreCase(company.trim()))
+                .findFirst();
+    }
+
 
     public Optional<CompanyStatisticsDTO> getCompanyStatisticsDTO(String company) {
         if (company == null || company.isBlank()) {
             return Optional.empty();
         }
         String name = company.trim();
-        Map<String, CompanyStatistics> statsMap = getCompanyStatistics();
-        CompanyStatistics cs = statsMap != null ? statsMap.get(name) : null;
+
+        List<CompanyStatistics> allStats = employeeDAO.getCompanyStatistics();
+        CompanyStatistics cs = allStats.stream()
+                .filter(stat -> stat.getBestEarningName() != null) // Zamiast sprawdzania company
+                .findFirst()
+                .orElse(null);
+
         if (cs == null) {
             return Optional.empty();
         }
@@ -217,25 +220,26 @@ public class EmployeeService {
         if (email == null || email.isBlank() || status == null) {
             throw new IllegalArgumentException("Email i status muszą być podane");
         }
-        for (int i = 0; i < employees.size(); i++) {
-            Employee e = employees.get(i);
-            if (e != null && email.equalsIgnoreCase(e.getEmail())) {
-                e.setStatus(status);
-                return e;
-            }
-        }
-        return null;
+
+        Optional<Employee> existing = employeeDAO.findByEmail(email);
+        if (existing.isEmpty()) return null;
+
+        Employee employee = existing.get();
+        employee.setStatus(status);
+        employeeDAO.save(employee);
+
+        return employee;
     }
 
     public List<Employee> getEmployeesByStatus(EmploymentStatus status) {
         if (status == null) return Collections.emptyList();
-        return employees.stream()
+        return getEmployees().stream()
                 .filter(Objects::nonNull)
                 .filter(e -> e.getStatus() == status)
                 .collect(Collectors.toList());
     }
 
-    public List<Employee> getEmployeesManagerAndAbove(){
+    public List<Employee> getEmployeesManagerAndAbove() {
         Map<String, List<Employee>> employees = getEmployeesByPosition();
         return employees.values()
                 .stream()
@@ -247,7 +251,15 @@ public class EmployeeService {
                 .toList();
     }
 
-    public List<Employee> getEmployeesByDepartment(Long departmentId){
-        return this.employees.stream().filter(employee -> Objects.equals(employee.getDepartmentId(), departmentId)).toList();
+    public List<Employee> getEmployeesByDepartment(Long departmentId) {
+        return getEmployees().stream()
+                .filter(employee -> Objects.equals(employee.getDepartmentId(), departmentId))
+                .toList();
     }
+
+    @Transactional
+    public void deleteAllEmployees() {
+        employeeDAO.deleteAll();
+    }
+
 }

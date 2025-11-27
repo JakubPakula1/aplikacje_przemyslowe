@@ -3,6 +3,7 @@ package com.github.jakubpakula1.lab.model;
 import java.util.Objects;
 
 public class Employee {
+    private Long id;
     private String name;
     private String surname;
     private String email;
@@ -35,6 +36,14 @@ public class Employee {
 
     public Employee() {
 
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getEmail() {
