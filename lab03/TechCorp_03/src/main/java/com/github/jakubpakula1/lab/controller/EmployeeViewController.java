@@ -1,5 +1,6 @@
 package com.github.jakubpakula1.lab.controller;
 
+import com.github.jakubpakula1.lab.dto.EmployeeListProjection;
 import com.github.jakubpakula1.lab.model.Employee;
 import com.github.jakubpakula1.lab.model.EmploymentStatus;
 import com.github.jakubpakula1.lab.model.ImportSummary;
@@ -8,6 +9,10 @@ import com.github.jakubpakula1.lab.service.DepartmentService;
 import com.github.jakubpakula1.lab.service.EmployeeService;
 import com.github.jakubpakula1.lab.service.FileStorageService;
 import com.github.jakubpakula1.lab.service.ImportService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -26,28 +31,37 @@ public class EmployeeViewController {
     private final DepartmentService departmentService;
     private final ImportService importService;
     private final FileStorageService fileStorageService;
+
     public EmployeeViewController(EmployeeService employeeService, DepartmentService departmentService, ImportService importService, FileStorageService fileStorageService) {
         this.employeeService = employeeService;
         this.departmentService = departmentService;
         this.importService = importService;
-        this.fileStorageService =fileStorageService;
+        this.fileStorageService = fileStorageService;
     }
-    @GetMapping
-    public String listEmployees(Model model){
-        List<Employee> employees = this.employeeService.getEmployees();
 
-        model.addAttribute("employees", employees);
+    @GetMapping
+    public String listEmployees(@RequestParam(defaultValue = "0") int page,
+                                @RequestParam(defaultValue = "10") int size,
+                                Model model) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("surname").ascending());
+        Page<Employee> employeesPage = this.employeeService.getAllEmployeesPage(pageable);
+
+        model.addAttribute("employees", employeesPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", employeesPage.getTotalPages());
+        model.addAttribute("totalElements", employeesPage.getTotalElements());
+        model.addAttribute("size", size);
 
         return "employees/list";
     }
 
+
     @GetMapping("/add")
-    public String addEmployeeForm(Model model){
-        model.addAttribute("employee", new Employee());
+    public String addEmployeeForm(Model model) {
+        model.addAttribute("employee", new Employee("", "", "", "", Position.PROGRAMISTA, 0));
         model.addAttribute("positions", Position.values());
         model.addAttribute("employmentStatuses", EmploymentStatus.values());
         model.addAttribute("departments", this.departmentService.getAllDepartments());
-
         return "employees/add-form";
     }
 
@@ -60,7 +74,7 @@ public class EmployeeViewController {
         if (employee.getName() == null || employee.getName().trim().isEmpty()) {
             bindingResult.rejectValue("name", "error.name", "Imię jest wymagane");
         }
-        if (employee.getSurname() == null || employee.getSurname().trim().isEmpty()) {
+        if (employee.getName() == null || employee.getName().trim().isEmpty()) {
             bindingResult.rejectValue("surname", "error.surname", "Nazwisko jest wymagane");
         }
         if (employee.getEmail() == null || employee.getEmail().trim().isEmpty()) {
@@ -81,7 +95,7 @@ public class EmployeeViewController {
         }
 
         try {
-            this.employeeService.AddEmployee(employee);
+            this.employeeService.addEmployee(employee);
             redirectAttributes.addFlashAttribute("message", "Pracownik dodany pomyślnie");
             return "redirect:/employees";
         } catch (IllegalArgumentException e) {
@@ -94,7 +108,7 @@ public class EmployeeViewController {
     }
 
     @GetMapping("/edit/{email}")
-    public String editEmployeeForm(@PathVariable String email, Model model){
+    public String editEmployeeForm(@PathVariable String email, Model model) {
         model.addAttribute("employee", this.employeeService.getEmployeeByEmail(email));
         model.addAttribute("positions", Position.values());
         model.addAttribute("employmentStatuses", EmploymentStatus.values());
@@ -113,7 +127,7 @@ public class EmployeeViewController {
         if (employee.getName() == null || employee.getName().trim().isEmpty()) {
             bindingResult.rejectValue("name", "error.name", "Imię jest wymagane");
         }
-        if (employee.getSurname() == null || employee.getSurname().trim().isEmpty()) {
+        if (employee.getName() == null || employee.getName().trim().isEmpty()) {
             bindingResult.rejectValue("surname", "error.surname", "Nazwisko jest wymagane");
         }
         if (employee.getSalary() < 0) {
@@ -140,32 +154,85 @@ public class EmployeeViewController {
     }
 
     @DeleteMapping("/delete/{email}")
-    public String deleteEmployee(@PathVariable String email, RedirectAttributes redirectAttributes){
+    public String deleteEmployee(@PathVariable String email, RedirectAttributes redirectAttributes) {
         this.employeeService.deleteEmployee(email);
         redirectAttributes.addFlashAttribute("message", "Pracownik usunięty pomyślnie");
         return "employees/list";
     }
 
     @GetMapping("/search")
-    public String searchEmployeesForm(){
+    public String searchEmployeesForm(Model model) {
+        model.addAttribute("positions", Position.values());
         return "employees/search-form";
     }
+
     @PostMapping("/search")
-    public String searchEmployees(@RequestParam("company") String company, Model model){
-        model.addAttribute("employees", this.employeeService.getCompanyEmployees(company));
-        model.addAttribute("company", company);
+    public String searchEmployees(@RequestParam(required = false) String name,
+                                  @RequestParam(required = false) String surname,
+                                  @RequestParam(required = false) String company,
+                                  @RequestParam(required = false) Position position,
+                                  @RequestParam(required = false) Integer minSalary,
+                                  @RequestParam(required = false) Integer maxSalary,
+                                  @RequestParam(required = false) Long departmentId,
+                                  @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(defaultValue = "10") int size,
+                                  Model model) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("lastName").ascending());
+        Page<Employee> employeesPage = this.employeeService.searchEmployees(name, surname, company, position, minSalary, maxSalary, departmentId, pageable);
+
+        model.addAttribute("employees", employeesPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", employeesPage.getTotalPages());
+        model.addAttribute("totalElements", employeesPage.getTotalElements());
+        model.addAttribute("size", size);
+        model.addAttribute("positions", Position.values());
 
         return "employees/search-results";
     }
+
+    @GetMapping("/projected")
+    public String listEmployeesProjected(@RequestParam(defaultValue = "0") int page,
+                                         @RequestParam(defaultValue = "10") int size,
+                                         Model model) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<EmployeeListProjection> employeesPage = this.employeeService.getAllEmployeesProjected(pageable);
+
+        model.addAttribute("employees", employeesPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", employeesPage.getTotalPages());
+        model.addAttribute("totalElements", employeesPage.getTotalElements());
+        model.addAttribute("size", size);
+
+        return "employees/projected-list";
+    }
+
+    @PostMapping("/search-projected")
+    public String searchEmployeesProjected(@RequestParam(required = false) String company,
+                                           @RequestParam(defaultValue = "0") int page,
+                                           @RequestParam(defaultValue = "10") int size,
+                                           Model model) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<EmployeeListProjection> employeesPage = this.employeeService.getCompanyEmployeesProjected(company, pageable);
+
+        model.addAttribute("employees", employeesPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", employeesPage.getTotalPages());
+        model.addAttribute("totalElements", employeesPage.getTotalElements());
+        model.addAttribute("size", size);
+        model.addAttribute("company", company);
+
+        return "employees/projected-results";
+    }
+
     @GetMapping("/import")
-    public String importForm(){
+    public String importForm() {
         return "employees/import-form";
     }
 
     @PostMapping("/import")
     public String importEmployees(@RequestParam("file") MultipartFile file,
                                   @RequestParam("fileType") String fileType,
-                                  RedirectAttributes redirectAttributes){
+                                  RedirectAttributes redirectAttributes) {
         try {
             if (file.isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "Proszę wybrać plik");
@@ -205,7 +272,7 @@ public class EmployeeViewController {
     }
 
     @GetMapping("/import-results")
-    public String importResults(Model model){
+    public String importResults(Model model) {
         return "employees/import-results";
     }
 }

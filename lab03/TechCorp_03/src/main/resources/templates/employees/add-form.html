@@ -20,6 +20,12 @@
                     <li th:each="err : ${#fields.allErrors()}" th:text="${err}"></li>
                 </ul>
             </div>
+            <div th:if="${validationErrors}" class="alert alert-error">
+                <strong>Błędy walidacji:</strong>
+                <ul>
+                    <li th:each="error : ${validationErrors}" th:text="${error}"></li>
+                </ul>
+            </div>
 
             <div class="form-group">
                 <label for="name">Imię *</label>

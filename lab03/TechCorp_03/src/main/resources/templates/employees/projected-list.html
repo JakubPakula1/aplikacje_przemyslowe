@@ -3,21 +3,17 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}">
 <head>
-    <title>Lista Pracowników</title>
+    <title>Lista Pracowników (Projekcja)</title>
 </head>
 <body>
 <div layout:fragment="content">
     <div class="header">
-        <h1>Lista Pracowników</h1>
-        <a href="/employees/add" class="btn">Dodaj Nowego Pracownika</a>
-        <a href="/employees/import" class="btn">Zaimportuj pracowników</a>
-        <a href="/employees/search" class="btn">Szukaj Pracowników</a>
+        <h1>Pracownicy (Skrócony Widok)</h1>
+        <a href="/employees" class="btn">Powrót do pełnej listy</a>
     </div>
 
-    <div th:if="${message}" class="alert-success" th:text="${message}"></div>
-
     <div th:if="${#lists.isEmpty(employees)}" class="alert-info">
-        <p>Brak Pracowników w bazie danych! Dodaj nowego pracownika.</p>
+        <p>Brak Pracowników w bazie danych!</p>
     </div>
 
     <div th:unless="${#lists.isEmpty(employees)}">
@@ -25,27 +21,15 @@
             <thead>
                 <tr>
                     <th>Email</th>
-                    <th>Imię</th>
-                    <th>Nazwisko</th>
-                    <th>Firma</th>
+                    <th>Imię i Nazwisko</th>
                     <th>Stanowisko</th>
-                    <th>Akcje</th>
                 </tr>
             </thead>
             <tbody>
                 <tr th:each="employee : ${employees}">
                     <td th:text="${employee.email}"></td>
-                    <td th:text="${employee.name}"></td>
-                    <td th:text="${employee.surname}"></td>
-                    <td th:text="${employee.company}"></td>
-                    <td th:text="${employee.position.name()}"></td>
-                    <td>
-                        <a th:href="@{/employees/edit/{email}(email=${employee.email})}" class="btn-primary">Edytuj</a>
-                        <form th:action="@{/employees/delete/{email}(email=${employee.email})}" method="post" class="form-delete">
-                            <input type="hidden" name="_method" value="DELETE">
-                            <button type="submit" class="btn-danger btn-delete" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
-                        </form>
-                    </td>
+                    <td th:text="${employee.fullName}"></td>
+                    <td th:text="${employee.position}"></td>
                 </tr>
             </tbody>
         </table>

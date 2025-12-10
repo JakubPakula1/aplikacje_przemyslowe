@@ -5,6 +5,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -34,7 +35,7 @@ public class ReportGeneratorService {
     public Resource generateEmployeesCsv(Optional<String> companyOpt) {
         List<Employee> employees = companyOpt
                 .map(employeeService::getCompanyEmployees)
-                .orElseGet(employeeService::getEmployees);
+                .orElseGet(employeeService::getAllEmployees);
 
         String header = "name,surname,company,email,position,salary\n";
         String body = employees.stream()
@@ -72,13 +73,13 @@ public class ReportGeneratorService {
 
             try (PDPageContentStream cs = new PDPageContentStream(doc, page)) {
                 cs.beginText();
-                cs.setFont(org.apache.pdfbox.pdmodel.font.PDType1Font.HELVETICA_BOLD, 16);
+                cs.setFont(PDType1Font.HELVETICA_BOLD, 16);
                 cs.newLineAtOffset(50, 700);
                 cs.showText("Statistics for company: " + companyName);
                 cs.endText();
 
                 cs.beginText();
-                cs.setFont(org.apache.pdfbox.pdmodel.font.PDType1Font.HELVETICA, 12);
+                cs.setFont(PDType1Font.HELVETICA, 12);
                 cs.newLineAtOffset(50, 670);
                 cs.showText("Total employees: " + total);
                 cs.endText();
@@ -87,7 +88,7 @@ public class ReportGeneratorService {
                 int y = 640;
                 for (Employee e : employees) {
                     cs.beginText();
-                    cs.setFont(org.apache.pdfbox.pdmodel.font.PDType1Font.HELVETICA, 10);
+                    cs.setFont(PDType1Font.HELVETICA, 10);
                     cs.newLineAtOffset(50, y);
                     String line = String.format("%s %s (%s)", e.getName(), e.getSurname(), e.getEmail());
                     cs.showText(truncate(line, 90));

@@ -9,7 +9,6 @@ import com.github.jakubpakula1.lab.service.EmployeeService;
 import com.github.jakubpakula1.lab.service.FileStorageService;
 import com.github.jakubpakula1.lab.service.ImportService;
 import com.github.jakubpakula1.lab.model.ImportSummary;
-import com.github.jakubpakula1.lab.model.ImportSummary.ErrorEntry;
 import com.github.jakubpakula1.lab.service.ReportGeneratorService;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -109,7 +108,7 @@ public class FileUploadController {
                 @RequestParam("file") MultipartFile file,
                 @RequestParam("type") FileType type) {
 
-            boolean exists = employeeService.getEmployees()
+            boolean exists = employeeService.getAllEmployees()
                     .stream()
                     .anyMatch(e -> email.equalsIgnoreCase(e.getEmail()));
 

@@ -51,7 +51,7 @@ class EmployeeControllerTest {
         Employee e1 = mockEmployee("John", "Doe", "john@example.com", "Acme", 5000, EmploymentStatus.ACTIVE);
         Employee e2 = mockEmployee("Jane", "Smith", "jane@example.com", "Acme", 6000, EmploymentStatus.ON_LEAVE);
 
-        when(employeeService.getEmployees()).thenReturn(List.of(e1, e2));
+        when(employeeService.getAllEmployees()).thenReturn(List.of(e1, e2));
 
         mockMvc.perform(get("/api/employees"))
                 .andExpect(status().isOk())
@@ -59,7 +59,7 @@ class EmployeeControllerTest {
                 .andExpect(jsonPath("$[0].email").value("john@example.com"))
                 .andExpect(jsonPath("$[1].email").value("jane@example.com"));
 
-        verify(employeeService).getEmployees();
+        verify(employeeService).getAllEmployees();
     }
 
     @Test
@@ -96,23 +96,23 @@ class EmployeeControllerTest {
         var createMap = new java.util.HashMap<String, Object>();
         createMap.put("name", "John");
         createMap.put("surname", "Doe");
-        createMap.put("email", "john@example.com");
+        createMap.put("email", "john@techcorp.com");
         createMap.put("company", "Acme");
         createMap.put("position", "PROGRAMISTA");
         createMap.put("salary", 5000);
         createMap.put("status", "ACTIVE");
 
-        Employee created = mockEmployee("John", "Doe", "john@example.com", "Acme", 5000, EmploymentStatus.ACTIVE);
-        when(employeeService.AddEmployee(ArgumentMatchers.any())).thenReturn(created);
+        Employee created = mockEmployee("John", "Doe", "john@techcorp.com", "Acme", 5000, EmploymentStatus.ACTIVE);
+        when(employeeService.addEmployee(ArgumentMatchers.any())).thenReturn(created);
 
         mockMvc.perform(post("/api/employees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createMap)))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", Matchers.containsString("/api/employees/john@example.com")))
-                .andExpect(jsonPath("$.email").value("john@example.com"));
+                .andExpect(header().string("Location", Matchers.containsString("/api/employees/john@techcorp.com")))
+                .andExpect(jsonPath("$.email").value("john@techcorp.com"));
 
-        verify(employeeService).AddEmployee(ArgumentMatchers.any());
+        verify(employeeService).addEmployee(ArgumentMatchers.any());
     }
 
     @Test
@@ -121,13 +121,13 @@ class EmployeeControllerTest {
         var createMap = new java.util.HashMap<String, Object>();
         createMap.put("name", "John");
         createMap.put("surname", "Doe");
-        createMap.put("email", "john@example.com");
+        createMap.put("email", "john@techcorp.com");
         createMap.put("company", "Acme");
         createMap.put("salary", 5000);
         createMap.put("position", "PROGRAMISTA");
         createMap.put("status", "ACTIVE");
 
-        when(employeeService.AddEmployee(ArgumentMatchers.any()))
+        when(employeeService.addEmployee(ArgumentMatchers.any()))
                 .thenThrow(new DuplicateEmailException("Employee with this email already exists!"));
 
         mockMvc.perform(post("/api/employees")
@@ -137,7 +137,7 @@ class EmployeeControllerTest {
                 .andExpect(jsonPath("$.message").value("Employee with this email already exists!"))
                 .andExpect(jsonPath("$.status").value(409));
 
-        verify(employeeService).AddEmployee(ArgumentMatchers.any());
+        verify(employeeService).addEmployee(ArgumentMatchers.any());
     }
 
     @Test
@@ -191,28 +191,28 @@ class EmployeeControllerTest {
             var updateMap = new java.util.HashMap<String, Object>();
             updateMap.put("name", "John");
             updateMap.put("surname", "Updated");
-            updateMap.put("email", "john.updated@example.com");
+            updateMap.put("email", "john.updated@techcorp.com");
             updateMap.put("company", "Acme");
             updateMap.put("position", "PROGRAMISTA");
             updateMap.put("salary", 7000);
             updateMap.put("status", "ACTIVE");
 
-            Employee existing = mockEmployee("John", "Doe", "john@example.com", "Acme", 5000, EmploymentStatus.ACTIVE);
-            when(employeeService.getEmployeeByEmail("john@example.com")).thenReturn(existing);
+            Employee existing = mockEmployee("John", "Doe", "john@techcorp.com", "Acme", 5000, EmploymentStatus.ACTIVE);
+            when(employeeService.getEmployeeByEmail("john@techcorp.com")).thenReturn(existing);
 
-            Employee saved = mockEmployee("John", "Updated", "john.updated@example.com", "Acme", 7000, EmploymentStatus.ACTIVE);
-            when(employeeService.updateEmployee(eq("john@example.com"), ArgumentMatchers.any())).thenReturn(saved);
+            Employee saved = mockEmployee("John", "Updated", "john.updated@techcorp.com", "Acme", 7000, EmploymentStatus.ACTIVE);
+            when(employeeService.updateEmployee(eq("john@techcorp.com"), ArgumentMatchers.any())).thenReturn(saved);
 
-            mockMvc.perform(put("/api/employees/john@example.com")
+            mockMvc.perform(put("/api/employees/john@techcorp.com")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(updateMap)))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.email").value("john.updated@example.com"))
+                    .andExpect(jsonPath("$.email").value("john.updated@techcorp.com"))
                     .andExpect(jsonPath("$.surname").value("Updated"))
                     .andExpect(jsonPath("$.salary").value(7000));
 
-            verify(employeeService).getEmployeeByEmail("john@example.com");
-            verify(employeeService).updateEmployee(eq("john@example.com"), ArgumentMatchers.any());
+            verify(employeeService).getEmployeeByEmail("john@techcorp.com");
+            verify(employeeService).updateEmployee(eq("john@techcorp.com"), ArgumentMatchers.any());
         }
 
         @Test
@@ -221,26 +221,110 @@ class EmployeeControllerTest {
             var updateMap = new java.util.HashMap<String, Object>();
             updateMap.put("name", "John");
             updateMap.put("surname", "Doe");
-            updateMap.put("email", "existing@example.com"); // próbujemy zmienić na istniejący
+            updateMap.put("email", "existing@techcorp.com"); // próbujemy zmienić na istniejący
             updateMap.put("company", "Acme");
             updateMap.put("position", "PROGRAMISTA");
             updateMap.put("salary", 6000);
             updateMap.put("status", "ACTIVE");
 
-            Employee existing = mockEmployee("John", "Doe", "john@example.com", "Acme", 5000, EmploymentStatus.ACTIVE);
-            when(employeeService.getEmployeeByEmail("john@example.com")).thenReturn(existing);
+            Employee existing = mockEmployee("John", "Doe", "john@techcorp.com", "Acme", 5000, EmploymentStatus.ACTIVE);
+            when(employeeService.getEmployeeByEmail("john@techcorp.com")).thenReturn(existing);
 
-            when(employeeService.updateEmployee(eq("john@example.com"), ArgumentMatchers.any()))
+            when(employeeService.updateEmployee(eq("john@techcorp.com"), ArgumentMatchers.any()))
                     .thenThrow(new DuplicateEmailException("Employee with this email already exists!"));
 
-            mockMvc.perform(put("/api/employees/john@example.com")
+            mockMvc.perform(put("/api/employees/john@techcorp.com")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(updateMap)))
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.message").value("Employee with this email already exists!"))
                     .andExpect(jsonPath("$.status").value(409));
 
-            verify(employeeService).getEmployeeByEmail("john@example.com");
-            verify(employeeService).updateEmployee(eq("john@example.com"), ArgumentMatchers.any());
+            verify(employeeService).getEmployeeByEmail("john@techcorp.com");
+            verify(employeeService).updateEmployee(eq("john@techcorp.com"), ArgumentMatchers.any());
+        }
+
+        @Test
+        @DisplayName("POST /api/employees - walidacja: puste imię zwraca 400")
+        void testCreateEmployeeEmptyFirstName() throws Exception {
+            var createMap = new java.util.HashMap<String, Object>();
+            createMap.put("name", ""); // puste imię
+            createMap.put("surname", "Doe");
+            createMap.put("email", "john@techcorp.com");
+            createMap.put("company", "Acme");
+            createMap.put("salary", 5000);
+            createMap.put("position", "PROGRAMISTA");
+            createMap.put("status", "ACTIVE");
+
+            mockMvc.perform(post("/api/employees")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(createMap)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("Błąd walidacji danych"))
+                    .andExpect(jsonPath("$.errors.firstName").exists());
+        }
+
+        @Test
+        @DisplayName("POST /api/employees - walidacja: ujemna pensja zwraca 400")
+        void testCreateEmployeeNegativeSalary() throws Exception {
+            var createMap = new java.util.HashMap<String, Object>();
+            createMap.put("name", "John");
+            createMap.put("surname", "Doe");
+            createMap.put("email", "john@techcorp.com");
+            createMap.put("company", "Acme");
+            createMap.put("salary", -5000); // ujemna pensja
+            createMap.put("position", "PROGRAMISTA");
+            createMap.put("status", "ACTIVE");
+
+            mockMvc.perform(post("/api/employees")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(createMap)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("Błąd walidacji danych"))
+                    .andExpect(jsonPath("$.errors.salary").exists());
+        }
+
+        @Test
+        @DisplayName("POST /api/employees - walidacja: email bez domeny @techcorp.com zwraca 400")
+        void testCreateEmployeeInvalidDomain() throws Exception {
+            var createMap = new java.util.HashMap<String, Object>();
+            createMap.put("name", "John");
+            createMap.put("surname", "Doe");
+            createMap.put("email", "john@example.com"); // brak domeny @techcorp.com
+            createMap.put("company", "Acme");
+            createMap.put("salary", 5000);
+            createMap.put("position", "PROGRAMISTA");
+            createMap.put("status", "ACTIVE");
+
+            mockMvc.perform(post("/api/employees")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(createMap)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("Błąd walidacji danych"))
+                    .andExpect(jsonPath("$.errors.email").exists());
+        }
+
+        @Test
+        @DisplayName("POST /api/employees - walidacja: poprawne dane z @techcorp.com domeny zwracają 201")
+        void testCreateEmployeeValidTechCorpEmail() throws Exception {
+            var createMap = new java.util.HashMap<String, Object>();
+            createMap.put("name", "John");
+            createMap.put("surname", "Doe");
+            createMap.put("email", "john@techcorp.com"); // prawidłowa domena
+            createMap.put("company", "Acme");
+            createMap.put("salary", 5000);
+            createMap.put("position", "PROGRAMISTA");
+            createMap.put("status", "ACTIVE");
+
+            Employee created = mockEmployee("John", "Doe", "john@techcorp.com", "Acme", 5000, EmploymentStatus.ACTIVE);
+            when(employeeService.addEmployee(ArgumentMatchers.any())).thenReturn(created);
+
+            mockMvc.perform(post("/api/employees")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(createMap)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.email").value("john@techcorp.com"));
+
+            verify(employeeService).addEmployee(ArgumentMatchers.any());
         }
 }

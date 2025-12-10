@@ -3,16 +3,58 @@ package com.github.jakubpakula1.lab.exception;
 import com.github.jakubpakula1.lab.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        Map<String, String> fieldErrors = new HashMap<>();
+        
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                fieldErrors.put(error.getField(), error.getDefaultMessage())
+        );
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Błąd walidacji danych");
+        response.put("errors", fieldErrors);
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("timestamp", Instant.now());
+        response.put("path", request.getRequestURI());
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
+        Map<String, String> violations = ex.getConstraintViolations().stream()
+                .collect(Collectors.toMap(
+                        cv -> cv.getPropertyPath().toString(),
+                        ConstraintViolation::getMessage
+                ));
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Błąd walidacji danych");
+        response.put("errors", violations);
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("timestamp", Instant.now());
+        response.put("path", request.getRequestURI());
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
 
     @ExceptionHandler(EmployeeNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleEmployeeNotFound(EmployeeNotFoundException ex, HttpServletRequest request) {

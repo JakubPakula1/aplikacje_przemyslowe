@@ -67,7 +67,9 @@ public class ImportService {
                         continue;
                     }
 
-                    employeeService.AddEmployee(new Employee(firstName, lastName, company, email, position, salary));
+                    Employee employee = new Employee(firstName, lastName, company, email, position, salary);
+                    employee.setStatus(EmploymentStatus.ACTIVE);
+                    employeeService.addEmployee(employee);
                     importedEmployees++;
                 } catch (Exception e) {
                     summary.addError(lineNumber, "Error while processing row: " + e.getMessage());
@@ -96,7 +98,9 @@ public class ImportService {
      *   </employee>
      * </employees>
      */
+   @Transactional
     public ImportSummary importFromXml(String filePath) throws IOException {
+        employeeService.deleteAllEmployees();
         ImportSummary summary = new ImportSummary();
         int importedEmployees = 0;
         int elementNumber = 0;
@@ -126,7 +130,6 @@ public class ImportService {
                     String positionStr = getElementValue(empElement, "position");
                     String salaryStr = getElementValue(empElement, "salary");
 
-                    // Walidacja pól wymaganych
                     if (name == null || name.trim().isEmpty()) {
                         summary.addError(elementNumber, "Pole 'name' jest wymagane");
                         continue;
@@ -143,38 +146,33 @@ public class ImportService {
                         summary.addError(elementNumber, "Pole 'company' jest wymagane");
                         continue;
                     }
-                    if (positionStr == null || positionStr.trim().isEmpty()) {
-                        summary.addError(elementNumber, "Pole 'position' jest wymagane");
-                        continue;
-                    }
-                    if (salaryStr == null || salaryStr.trim().isEmpty()) {
-                        summary.addError(elementNumber, "Pole 'salary' jest wymagane");
-                        continue;
-                    }
 
-                    // Parsowanie Position
                     Position position;
                     try {
+                        if (positionStr == null || positionStr.trim().isEmpty() || "None".equalsIgnoreCase(positionStr.trim())) {
+                            summary.addError(elementNumber, "Nieprawidłowa pozycja: " + positionStr);
+                            continue;
+                        }
                         position = Position.valueOf(positionStr.trim().toUpperCase());
-                    } catch (IllegalArgumentException e) {
-                        summary.addError(elementNumber, "Nieprawidłowa pozycja: " + positionStr.trim());
+                    } catch (IllegalArgumentException | NullPointerException e) {
+                        summary.addError(elementNumber, "Nieprawidłowa pozycja: " + positionStr);
                         continue;
                     }
 
-                    // Parsowanie salary
                     int salary;
                     try {
                         salary = Integer.parseInt(salaryStr.trim());
                         if (salary < 0) {
-                            summary.addError(elementNumber, "Wynagrodzenie nie może być ujemne: " + salary);
+                            summary.addError(elementNumber, "Wynagrodzenie nie może być ujemne");
                             continue;
                         }
-                    } catch (NumberFormatException e) {
-                        summary.addError(elementNumber, "Nieprawidłowa wartość wynagrodzenia: " + salaryStr.trim());
+                    } catch (NumberFormatException | NullPointerException e) {
+                        summary.addError(elementNumber, "Nieprawidłowa wartość wynagrodzenia: " + salaryStr);
                         continue;
                     }
 
-                    // Opcjonalny status zatrudnienia
+                    Employee employee = new Employee(name.trim(), surname.trim(), company.trim(), email.trim(), position, salary);
+
                     String statusStr = getElementValue(empElement, "status");
                     EmploymentStatus status = EmploymentStatus.ACTIVE;
                     if (statusStr != null && !statusStr.trim().isEmpty()) {
@@ -186,23 +184,16 @@ public class ImportService {
                         }
                     }
 
-                    // Tworzenie i dodawanie pracownika
-                    Employee employee = new Employee(name.trim(), surname.trim(), company.trim(), email.trim(), position, salary);
                     employee.setStatus(status);
-                    employeeService.AddEmployee(employee);
+                    employeeService.addEmployee(employee);
                     importedEmployees++;
 
                 } catch (Exception e) {
                     summary.addError(elementNumber, "Błąd przy przetwarzaniu elementu: " + e.getMessage());
                 }
             }
-
-        } catch (ParserConfigurationException e) {
-            throw new IOException("Błąd konfiguracji parsera XML: " + e.getMessage(), e);
-        } catch (SAXException e) {
-            throw new IOException("Błąd parsowania XML: " + e.getMessage(), e);
-        } catch (IOException e) {
-            throw new IOException("Błąd odczytywania pliku XML: " + e.getMessage(), e);
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            throw new IOException("Błąd przetwarzania XML: " + e.getMessage(), e);
         }
 
         summary.setImportedEmployees(importedEmployees);

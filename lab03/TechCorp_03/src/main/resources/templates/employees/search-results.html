@@ -3,28 +3,31 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout}">
 <head>
-    <title>Wyniki wyszukiwania</title>
+    <title>Wyniki Wyszukiwania</title>
 </head>
 <body>
 <div layout:fragment="content">
-    <h1>Wyniki wyszukiwania</h1>
-
-    <div class="search-info">
-        <p>Szukano pracowników z firmy: <strong th:text="${company}"></strong></p>
-        <p th:text="'Znaleziono ' + ${#lists.size(employees)} + ' wyników'"></p>
+    <div class="header">
+        <h1>Wyniki Wyszukiwania Pracowników</h1>
+        <a href="/employees/search" class="btn">Nowe Wyszukiwanie</a>
+        <a href="/employees" class="btn">Powrót do listy</a>
     </div>
 
     <div th:if="${#lists.isEmpty(employees)}" class="alert-info">
-        <p>Brak pracowników dla podanego kryterium wyszukiwania.</p>
+        <p>Brak pracowników spełniających kryteria wyszukiwania.</p>
     </div>
 
-    <div th:if="${!#lists.isEmpty(employees)}">
+    <div th:unless="${#lists.isEmpty(employees)}">
+        <p class="info-text">Znaleziono <span th:text="${#lists.size(employees)}"></span> pracowników</p>
         <table class="table">
             <thead>
                 <tr>
                     <th>Email</th>
-                    <th>Imię i nazwisko</th>
+                    <th>Imię</th>
+                    <th>Nazwisko</th>
                     <th>Firma</th>
+                    <th>Stanowisko</th>
+                    <th>Wynagrodzenie</th>
                     <th>Akcje</th>
                 </tr>
             </thead>
@@ -32,19 +35,37 @@
                 <tr th:each="employee : ${employees}">
                     <td th:text="${employee.email}"></td>
                     <td th:text="${employee.name}"></td>
+                    <td th:text="${employee.surname}"></td>
                     <td th:text="${employee.company}"></td>
+                    <td th:text="${employee.position}"></td>
+                    <td th:text="${employee.salary}"></td>
                     <td>
                         <a th:href="@{/employees/edit/{email}(email=${employee.email})}" class="btn-primary">Edytuj</a>
                         <form th:action="@{/employees/delete/{email}(email=${employee.email})}" method="post" class="form-delete">
+                            <input type="hidden" name="_method" value="DELETE">
                             <button type="submit" class="btn-danger btn-delete" onclick="return confirm('Na pewno usunąć?')">Usuń</button>
                         </form>
                     </td>
                 </tr>
             </tbody>
         </table>
-    </div>
 
-    <a href="/employees" class="btn-secondary">Wróć do listy</a>
+        <div class="pagination">
+            <span th:if="${currentPage > 0}">
+                <a th:href="@{?page=0&size=__${size}__&name=__${name}__&surname=__${surname}__&company=__${company}__}" class="btn-sm">Pierwsza</a>
+                <a th:href="@{?page=__${currentPage - 1}__&size=__${size}__&name=__${name}__&surname=__${surname}__&company=__${company}__}" class="btn-sm">Poprzednia</a>
+            </span>
+
+            <span th:text="${currentPage + 1} + ' / ' + ${totalPages}" class="page-info"></span>
+
+            <span th:if="${currentPage < totalPages - 1}">
+                <a th:href="@{?page=__${currentPage + 1}__&size=__${size}__&name=__${name}__&surname=__${surname}__&company=__${company}__}" class="btn-sm">Następna</a>
+                <a th:href="@{?page=__${totalPages - 1}__&size=__${size}__&name=__${name}__&surname=__${surname}__&company=__${company}__}" class="btn-sm">Ostatnia</a>
+            </span>
+
+            <span class="total-info">Razem: <span th:text="${totalElements}"></span> rekordów</span>
+        </div>
+    </div>
 </div>
 </body>
 </html>

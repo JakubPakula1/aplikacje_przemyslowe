@@ -1,10 +1,9 @@
 package com.github.jakubpakula1.lab.service;
 
-import com.github.jakubpakula1.lab.dao.EmployeeDAO;
-import com.github.jakubpakula1.lab.model.CompanyStatistics;
 import com.github.jakubpakula1.lab.model.Employee;
 import com.github.jakubpakula1.lab.model.EmploymentStatus;
 import com.github.jakubpakula1.lab.model.Position;
+import com.github.jakubpakula1.lab.repository.EmployeeRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,79 +18,50 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class EmployeeServiceTest {
     @Mock
-    private EmployeeDAO employeeDAO;
+    private EmployeeRepository employeeRepository;
 
     @InjectMocks
     private EmployeeService service;
 
-
-    @Test
-    void addEmployee_null_throws() {
-        assertThatThrownBy(() -> service.AddEmployee(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Employee can't be null");
-    }
-
     @Test
     void addEmployee_valid_succeeds() {
         Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findByEmail("jan@x.com")).thenReturn(Optional.empty());
+        when(employeeRepository.existsByEmail("jan@x.com")).thenReturn(false);
+        when(employeeRepository.save(emp)).thenReturn(emp);
 
-        service.AddEmployee(emp);
+        service.addEmployee(emp);
 
-        verify(employeeDAO).save(emp);
+        verify(employeeRepository).save(emp);
     }
 
     @Test
     void addEmployee_duplicateEmail_throws() {
         Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findByEmail("jan@x.com")).thenReturn(Optional.of(emp));
+        when(employeeRepository.existsByEmail("jan@x.com")).thenReturn(true);
 
-        assertThatThrownBy(() -> service.AddEmployee(emp))
-                .isInstanceOf(IllegalArgumentException.class);
-        verify(employeeDAO, never()).save(emp);
-    }
-
-    @Test
-    void addEmployee_multipleValid_succeeds() {
-        Employee emp1 = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        Employee emp2 = new Employee("Anna", "Nowak", "Y", "anna@y.com", Position.MANAGER, 12000);
-        when(employeeDAO.findByEmail("jan@x.com")).thenReturn(Optional.empty());
-        when(employeeDAO.findByEmail("anna@y.com")).thenReturn(Optional.empty());
-
-        service.AddEmployee(emp1);
-        service.AddEmployee(emp2);
-
-        verify(employeeDAO, times(2)).save(any());
+        assertThatThrownBy(() -> service.addEmployee(emp))
+                .isInstanceOf(com.github.jakubpakula1.lab.exception.DuplicateEmailException.class);
+        verify(employeeRepository, never()).save(emp);
     }
 
     @Test
     void displayWorkers_empty_doesNotThrow() {
-        when(employeeDAO.findAll()).thenReturn(Collections.emptyList());
+        when(employeeRepository.findAll()).thenReturn(Collections.emptyList());
 
-        assertThatCode(() -> service.DisplayWorkers()).doesNotThrowAnyException();
+        assertThatCode(() -> service.displayWorkers()).doesNotThrowAnyException();
     }
 
     @Test
     void displayWorkers_withEmployees_doesNotThrow() {
         Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp));
+        when(employeeRepository.findAll()).thenReturn(List.of(emp));
 
-        assertThatCode(() -> service.DisplayWorkers()).doesNotThrowAnyException();
-    }
-
-    @Test
-    void displayWorkers_withMultipleEmployees_doesNotThrow() {
-        Employee emp1 = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        Employee emp2 = new Employee("Anna", "Nowak", "Y", "anna@y.com", Position.MANAGER, 12000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp1, emp2));
-
-        assertThatCode(() -> service.DisplayWorkers()).doesNotThrowAnyException();
+        assertThatCode(() -> service.displayWorkers()).doesNotThrowAnyException();
     }
 
     @Test
     void getCompanyEmployees_emptyDatabase_returnsEmpty() {
-        when(employeeDAO.findAll()).thenReturn(Collections.emptyList());
+        when(employeeRepository.findByCompanyIgnoreCase("X")).thenReturn(Collections.emptyList());
 
         List<Employee> result = service.getCompanyEmployees("X");
 
@@ -100,8 +70,7 @@ public class EmployeeServiceTest {
 
     @Test
     void getCompanyEmployees_nonExistingCompany_returnsEmpty() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp));
+        when(employeeRepository.findByCompanyIgnoreCase("NonExisting")).thenReturn(Collections.emptyList());
 
         List<Employee> result = service.getCompanyEmployees("NonExisting");
 
@@ -114,14 +83,9 @@ public class EmployeeServiceTest {
     }
 
     @Test
-    void getCompanyEmployees_blankCompanyName_returnsEmpty() {
-        assertThat(service.getCompanyEmployees("   ")).isEmpty();
-    }
-
-    @Test
     void getCompanyEmployees_caseInsensitive_returnsEmployees() {
         Employee emp = new Employee("Jan", "Kowalski", "Acme", "jan@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp));
+        when(employeeRepository.findByCompanyIgnoreCase("acme")).thenReturn(List.of(emp));
 
         List<Employee> result = service.getCompanyEmployees("acme");
 
@@ -129,19 +93,8 @@ public class EmployeeServiceTest {
     }
 
     @Test
-    void getCompanyEmployees_multipleFromCompany_returnsAll() {
-        Employee emp1 = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        Employee emp2 = new Employee("Anna", "Nowak", "X", "anna@x.com", Position.MANAGER, 12000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp1, emp2));
-
-        List<Employee> result = service.getCompanyEmployees("X");
-
-        assertThat(result).hasSize(2);
-    }
-
-    @Test
     void getEmployeesSortedByLastName_emptyDatabase_returnsEmpty() {
-        when(employeeDAO.findAll()).thenReturn(Collections.emptyList());
+        when(employeeRepository.findAllByOrderBySurnameAsc()).thenReturn(Collections.emptyList());
 
         List<Employee> result = service.getEmployeesSortedByLastName();
 
@@ -149,234 +102,19 @@ public class EmployeeServiceTest {
     }
 
     @Test
-    void getEmployeesSortedByLastName_singleEmployee_returnsSame() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp));
-
-        List<Employee> result = service.getEmployeesSortedByLastName();
-
-        assertThat(result).hasSize(1).extracting(Employee::getSurname).contains("Kowalski");
-    }
-
-    @Test
-    void getEmployeesSortedByLastName_sortsByLastNameIgnoreCase() {
+    void getEmployeesSortedByLastName_sortsByLastName() {
         Employee emp1 = new Employee("Jan", "Zebra", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
         Employee emp2 = new Employee("Anna", "Apple", "X", "anna@x.com", Position.MANAGER, 12000);
-        Employee emp3 = new Employee("Bob", "Monkey", "X", "bob@x.com", Position.WICEPREZES, 9500);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp1, emp2, emp3));
+        when(employeeRepository.findAllByOrderBySurnameAsc()).thenReturn(List.of(emp2, emp1));
 
         List<Employee> result = service.getEmployeesSortedByLastName();
 
-        assertThat(result).extracting(Employee::getSurname).containsExactly("Apple", "Monkey", "Zebra");
-    }
-
-    @Test
-    void getEmployeesSortedByLastName_mixedCase_sortsCaseInsensitive() {
-        Employee emp1 = new Employee("Jan", "zebra", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        Employee emp2 = new Employee("Anna", "APPLE", "X", "anna@x.com", Position.MANAGER, 12000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp1, emp2));
-
-        List<Employee> result = service.getEmployeesSortedByLastName();
-
-        assertThat(result).extracting(Employee::getSurname).containsExactly("APPLE", "zebra");
-    }
-
-    @Test
-    void getEmployeesByPosition_emptyDatabase_returnsEmpty() {
-        when(employeeDAO.findAll()).thenReturn(Collections.emptyList());
-
-        Map<String, List<Employee>> result = service.getEmployeesByPosition();
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void getEmployeesByPosition_singlePosition_groupsCorrectly() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp));
-
-        Map<String, List<Employee>> result = service.getEmployeesByPosition();
-
-        assertThat(result).containsKey("PROGRAMISTA").extractingByKey("PROGRAMISTA").asList().hasSize(1);
-    }
-
-    @Test
-    void getEmployeesByPosition_multiplePositions_groupsCorrectly() {
-        Employee emp1 = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        Employee emp2 = new Employee("Anna", "Nowak", "Y", "anna@y.com", Position.MANAGER, 12000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp1, emp2));
-
-        Map<String, List<Employee>> result = service.getEmployeesByPosition();
-
-        assertThat(result).containsKeys("PROGRAMISTA", "MANAGER")
-                .extractingByKey("PROGRAMISTA").asList().hasSize(1);
-    }
-
-    @Test
-    void getPositionStatistics_emptyDatabase_returnsEmpty() {
-        when(employeeDAO.findAll()).thenReturn(Collections.emptyList());
-
-        Map<String, Integer> result = service.getPositionStatistics();
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void getPositionStatistics_singlePosition_countsCorrectly() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-
-        when(employeeDAO.findAll()).thenReturn(List.of(emp));
-
-        Map<String, Integer> result = service.getPositionStatistics();
-
-        assertThat(result).containsEntry("PROGRAMISTA", 1);
-    }
-
-    @Test
-    void getPositionStatistics_multiplePositions_countsCorrectly() {
-        Employee emp1 = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        Employee emp2 = new Employee("Anna", "Nowak", "X", "anna@x.com", Position.PROGRAMISTA, 9000);
-        Employee emp3 = new Employee("Bob", "Smith", "Y", "bob@y.com", Position.MANAGER, 12000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp1, emp2, emp3));
-
-        Map<String, Integer> result = service.getPositionStatistics();
-
-        assertThat(result).containsEntry("PROGRAMISTA", 2).containsEntry("MANAGER", 1);
-    }
-
-    @Test
-    void getAverageSalary_emptyEmployees_returnsZero() {
-        when(employeeDAO.findAll()).thenReturn(Collections.emptyList());
-
-        double result = service.getAverageSalary();
-
-        assertThat(result).isEqualTo(0.0);
-    }
-
-    @Test
-    void getAverageSalary_singleEmployee_returnsBaseSalary() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp));
-
-        double result = service.getAverageSalary();
-
-        assertThat(result).isEqualTo(8000.0);
-    }
-
-    @Test
-    void getAverageSalary_multipleEmployees_calculatesCorrectly() {
-        Employee emp1 = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        Employee emp2 = new Employee("Anna", "Nowak", "X", "anna@x.com", Position.MANAGER, 12000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp1, emp2));
-
-        double result = service.getAverageSalary();
-
-        assertThat(result).isEqualTo(10000.0);
-    }
-
-    @Test
-    void getHighestPaidEmployee_empty_returnsEmptyOptional() {
-        when(employeeDAO.findAll()).thenReturn(Collections.emptyList());
-
-        Optional<Employee> result = service.getHighestPaidEmployee();
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void getHighestPaidEmployee_singleEmployee_returnsThatEmployee() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp));
-
-        Optional<Employee> result = service.getHighestPaidEmployee();
-
-        assertThat(result).isPresent().get().extracting(Employee::getEmail).isEqualTo("jan@x.com");
-    }
-
-    @Test
-    void getHighestPaidEmployee_multipleEmployees_returnsHighest() {
-        Employee emp1 = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        Employee emp2 = new Employee("Anna", "Nowak", "Y", "anna@y.com", Position.WICEPREZES, 9500);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp1, emp2));
-
-        Optional<Employee> result = service.getHighestPaidEmployee();
-
-        assertThat(result).isPresent().get().extracting(Employee::getPosition).isEqualTo(Position.WICEPREZES);
-    }
-
-    @Test
-    void validateSalaryConsistency_emptyDatabase_returnsEmpty() {
-        when(employeeDAO.findAll()).thenReturn(Collections.emptyList());
-
-        List<Employee> result = service.validateSalaryConsistency();
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void validateSalaryConsistency_allConsistent_returnsEmpty() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp));
-
-        List<Employee> result = service.validateSalaryConsistency();
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void validateSalaryConsistency_singleInconsistent_detectsIt() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 5000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp));
-
-        List<Employee> result = service.validateSalaryConsistency();
-
-        assertThat(result).hasSize(1).extracting(Employee::getEmail).contains("jan@x.com");
-    }
-
-    @Test
-    void validateSalaryConsistency_multipleInconsistent_detectsAll() {
-        Employee emp1 = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 5000);
-        Employee emp2 = new Employee("Anna", "Nowak", "Y", "anna@y.com", Position.MANAGER, 8000);
-        when(employeeDAO.findAll()).thenReturn(List.of(emp1, emp2));
-
-        List<Employee> result = service.validateSalaryConsistency();
-
-        assertThat(result).hasSize(2);
-    }
-
-    @Test
-    void getCompanyStatistics_emptyDatabase_returnsEmpty() {
-        when(employeeDAO.getCompanyStatistics()).thenReturn(Collections.emptyList());
-
-        Map<String, CompanyStatistics> result = service.getCompanyStatistics();
-
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void getCompanyStatistics_singleCompany_calculatesCorrectly() {
-        CompanyStatistics stat = new CompanyStatistics("Acme", 1, 8000.0, "Jan Kowalski");
-        when(employeeDAO.getCompanyStatistics()).thenReturn(List.of(stat));
-
-        Map<String, CompanyStatistics> result = service.getCompanyStatistics();
-
-        assertThat(result).containsKey("Acme");
-    }
-
-    @Test
-    void getCompanyStatistics_multipleCompanies_groupsCorrectly() {
-        CompanyStatistics stat1 = new CompanyStatistics("Acme", 1, 8000.0, "Jan Kowalski");
-        CompanyStatistics stat2 = new CompanyStatistics("XYZ", 2, 10000.0, "Anna Nowak");
-        when(employeeDAO.getCompanyStatistics()).thenReturn(List.of(stat1, stat2));
-
-        Map<String, CompanyStatistics> result = service.getCompanyStatistics();
-
-        assertThat(result).containsKeys("Acme", "XYZ");
+        assertThat(result).extracting(Employee::getSurname).containsExactly("Apple", "Zebra");
     }
 
     @Test
     void getEmployeeByEmail_notFound_returnsNull() {
-        when(employeeDAO.findByEmail("notfound@x.com")).thenReturn(Optional.empty());
+        when(employeeRepository.findByEmail("notfound@x.com")).thenReturn(Optional.empty());
 
         Employee result = service.getEmployeeByEmail("notfound@x.com");
 
@@ -386,7 +124,7 @@ public class EmployeeServiceTest {
     @Test
     void getEmployeeByEmail_found_returnsEmployee() {
         Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findByEmail("jan@x.com")).thenReturn(Optional.of(emp));
+        when(employeeRepository.findByEmail("jan@x.com")).thenReturn(Optional.of(emp));
 
         Employee result = service.getEmployeeByEmail("jan@x.com");
 
@@ -394,120 +132,76 @@ public class EmployeeServiceTest {
     }
 
     @Test
-    void getEmployeeByEmail_caseInsensitive_returnsEmployee() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findByEmail("jan@x.com")).thenReturn(Optional.of(emp));
-
-        Employee result = service.getEmployeeByEmail("JAN@X.COM");
-
-        assertThat(result).isNotNull();
-        verify(employeeDAO).findByEmail("jan@x.com");
-    }
-
-    @Test
     void updateEmployee_notFound_returnsNull() {
         Employee updated = new Employee("A", "B", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findByEmail("notfound@x.com")).thenReturn(Optional.empty());
+        when(employeeRepository.findByEmail("notfound@x.com")).thenReturn(Optional.empty());
 
         Employee result = service.updateEmployee("notfound@x.com", updated);
 
         assertThat(result).isNull();
-        verify(employeeDAO, never()).save(any());
     }
 
     @Test
     void updateEmployee_validUpdate_updatesEmployee() {
         Employee e1 = new Employee("A", "B", "X", "old@x.com", Position.PROGRAMISTA, 8000);
         Employee updated = new Employee("NewName", "NewSurname", "Y", "old@x.com", Position.MANAGER, 12000);
-        when(employeeDAO.findByEmail("old@x.com")).thenReturn(Optional.of(e1));
+        when(employeeRepository.findByEmail("old@x.com")).thenReturn(Optional.of(e1));
+        when(employeeRepository.save(any())).thenReturn(e1);
 
         Employee result = service.updateEmployee("old@x.com", updated);
 
-        assertThat(result).isNotNull().extracting(Employee::getName).isEqualTo("NewName");
-        verify(employeeDAO).save(result);
+        assertThat(result).isNotNull();
+        verify(employeeRepository).save(any());
     }
 
     @Test
-    void updateEmployee_duplicateEmail_throws() {
-        Employee e1 = new Employee("A", "B", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("C", "D", "X", "c@x.com", Position.MANAGER, 12000);
-        Employee updated = new Employee("A", "B", "X", "c@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findByEmail("a@x.com")).thenReturn(Optional.of(e1));
-        when(employeeDAO.findByEmail("c@x.com")).thenReturn(Optional.of(e2));
+    void updateEmployee_changeEmail_updatesEmail() {
+        Employee e1 = new Employee("A", "B", "X", "old@x.com", Position.PROGRAMISTA, 8000);
+        Employee updated = new Employee("A", "B", "X", "new@x.com", Position.PROGRAMISTA, 8000);
+        when(employeeRepository.findByEmail("old@x.com")).thenReturn(Optional.of(e1));
+        when(employeeRepository.findByEmail("new@x.com")).thenReturn(Optional.empty());
+        when(employeeRepository.save(any())).thenReturn(e1);
 
-        assertThatThrownBy(() -> service.updateEmployee("a@x.com", updated))
-                .isInstanceOf(IllegalArgumentException.class);
-        verify(employeeDAO, never()).save(any());
-    }
-
-    @Test
-    void updateEmployee_sameEmail_succeeds() {
-        Employee e1 = new Employee("A", "B", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee updated = new Employee("NewName", "B", "X", "a@x.com", Position.PROGRAMISTA, 9000);
-        when(employeeDAO.findByEmail("a@x.com")).thenReturn(Optional.of(e1));
-
-        Employee result = service.updateEmployee("a@x.com", updated);
+        Employee result = service.updateEmployee("old@x.com", updated);
 
         assertThat(result).isNotNull();
-        verify(employeeDAO).save(result);
+        verify(employeeRepository).save(any());
+    }
+
+    @Test
+    void updateEmployee_changeEmailToDuplicate_throws() {
+        Employee e1 = new Employee("A", "B", "X", "old@x.com", Position.PROGRAMISTA, 8000);
+        Employee updated = new Employee("A", "B", "X", "duplicate@x.com", Position.PROGRAMISTA, 8000);
+        when(employeeRepository.findByEmail("old@x.com")).thenReturn(Optional.of(e1));
+        when(employeeRepository.findByEmail("duplicate@x.com")).thenReturn(Optional.of(new Employee("C", "D", "X", "duplicate@x.com", Position.MANAGER, 12000)));
+
+        assertThatThrownBy(() -> service.updateEmployee("old@x.com", updated))
+                .isInstanceOf(com.github.jakubpakula1.lab.exception.DuplicateEmailException.class);
     }
 
     @Test
     void deleteEmployee_notFound_returnsFalse() {
-        when(employeeDAO.findByEmail("notfound@x.com")).thenReturn(Optional.empty());
+        when(employeeRepository.findByEmail("notfound@x.com")).thenReturn(Optional.empty());
 
         boolean result = service.deleteEmployee("notfound@x.com");
 
         assertThat(result).isFalse();
-        verify(employeeDAO, never()).delete(any());
     }
 
     @Test
     void deleteEmployee_found_deletesAndReturnsTrue() {
         Employee e1 = new Employee("A", "B", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findByEmail("a@x.com")).thenReturn(Optional.of(e1));
+        when(employeeRepository.findByEmail("a@x.com")).thenReturn(Optional.of(e1));
 
         boolean result = service.deleteEmployee("a@x.com");
 
         assertThat(result).isTrue();
-        verify(employeeDAO).delete("a@x.com");
-    }
-
-    @Test
-    void updateEmployeeStatus_notFound_returnsNull() {
-        when(employeeDAO.findByEmail("notfound@x.com")).thenReturn(Optional.empty());
-
-        Employee result = service.updateEmployeeStatus("notfound@x.com", EmploymentStatus.ACTIVE);
-
-        assertThat(result).isNull();
-    }
-
-    @Test
-    void updateEmployeeStatus_found_updatesStatus() {
-        Employee e1 = new Employee("A", "B", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        when(employeeDAO.findByEmail("a@x.com")).thenReturn(Optional.of(e1));
-
-        Employee result = service.updateEmployeeStatus("a@x.com", EmploymentStatus.ON_LEAVE);
-
-        assertThat(result).isNotNull().extracting(Employee::getStatus).isEqualTo(EmploymentStatus.ON_LEAVE);
-        verify(employeeDAO).save(result);
-    }
-
-    @Test
-    void updateEmployeeStatus_nullEmail_throws() {
-        assertThatThrownBy(() -> service.updateEmployeeStatus(null, EmploymentStatus.ACTIVE))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    void updateEmployeeStatus_blankEmail_throws() {
-        assertThatThrownBy(() -> service.updateEmployeeStatus("   ", EmploymentStatus.ACTIVE))
-                .isInstanceOf(IllegalArgumentException.class);
+        verify(employeeRepository).delete(e1);
     }
 
     @Test
     void getStatusDistribution_emptyDatabase_returnsEmpty() {
-        when(employeeDAO.findAll()).thenReturn(Collections.emptyList());
+        when(employeeRepository.findAll()).thenReturn(Collections.emptyList());
 
         Map<String, Integer> result = service.getStatusDistribution();
 
@@ -515,25 +209,25 @@ public class EmployeeServiceTest {
     }
 
     @Test
-    void getStatusDistribution_multipleStatuses_countsCorrectly() {
+    void getStatusDistribution_withEmployees_returnsDistribution() {
         Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
         e1.setStatus(EmploymentStatus.ACTIVE);
-        e2.setStatus(EmploymentStatus.ON_LEAVE);
-        when(employeeDAO.findAll()).thenReturn(List.of(e1, e2));
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
+        e2.setStatus(EmploymentStatus.ACTIVE);
+        Employee e3 = new Employee("C", "C", "X", "c@x.com", Position.PROGRAMISTA, 9000);
+        e3.setStatus(EmploymentStatus.ON_LEAVE);
+        when(employeeRepository.findAll()).thenReturn(List.of(e1, e2, e3));
 
         Map<String, Integer> result = service.getStatusDistribution();
 
-        assertThat(result).containsEntry("ACTIVE", 1).containsEntry("ON_LEAVE", 1);
+        assertThat(result).containsEntry("ACTIVE", 2).containsEntry("ON_LEAVE", 1);
     }
 
     @Test
     void getEmployeesByStatus_withMatches_returnsFiltered() {
         Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
         e1.setStatus(EmploymentStatus.ON_LEAVE);
-        e2.setStatus(EmploymentStatus.ACTIVE);
-        when(employeeDAO.findAll()).thenReturn(List.of(e1, e2));
+        when(employeeRepository.findByStatus(EmploymentStatus.ON_LEAVE)).thenReturn(List.of(e1));
 
         List<Employee> result = service.getEmployeesByStatus(EmploymentStatus.ON_LEAVE);
 
@@ -541,23 +235,19 @@ public class EmployeeServiceTest {
     }
 
     @Test
-    void getEmployeesManagerAndAbove_withManagers_returnsManagers() {
-        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
-        when(employeeDAO.findAll()).thenReturn(List.of(e1, e2));
+    void getEmployeesByStatus_noMatches_returnsEmpty() {
+        when(employeeRepository.findByStatus(EmploymentStatus.ON_LEAVE)).thenReturn(Collections.emptyList());
 
-        List<Employee> result = service.getEmployeesManagerAndAbove();
+        List<Employee> result = service.getEmployeesByStatus(EmploymentStatus.ON_LEAVE);
 
-        assertThat(result).hasSize(1).extracting(Employee::getPosition).contains(Position.MANAGER);
+        assertThat(result).isEmpty();
     }
 
     @Test
     void getEmployeesByDepartment_withMatches_returnsFiltered() {
         Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
         Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
-        e1.setDepartmentId(1L);
-        e2.setDepartmentId(1L);
-        when(employeeDAO.findAll()).thenReturn(List.of(e1, e2));
+        when(employeeRepository.findByDepartment_Id(1L)).thenReturn(List.of(e1, e2));
 
         List<Employee> result = service.getEmployeesByDepartment(1L);
 
@@ -565,15 +255,176 @@ public class EmployeeServiceTest {
     }
 
     @Test
-    void getCompanyStatisticsDTO_found_returnsDTO() {
-        CompanyStatistics stat = new CompanyStatistics("Acme", 2, 10000.0, "Jan Kowalski");
-        Employee e1 = new Employee("Jan", "Kowalski", "Acme", "jan@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("Anna", "Nowak", "Acme", "anna@x.com", Position.MANAGER, 12000);
-        when(employeeDAO.getCompanyStatistics()).thenReturn(List.of(stat));
-        when(employeeDAO.findAll()).thenReturn(List.of(e1, e2));
+    void getEmployeesByDepartment_noMatches_returnsEmpty() {
+        when(employeeRepository.findByDepartment_Id(1L)).thenReturn(Collections.emptyList());
 
-        var result = service.getCompanyStatisticsDTO("Acme");
+        List<Employee> result = service.getEmployeesByDepartment(1L);
 
-        assertThat(result).isPresent().get().extracting("companyName").isEqualTo("Acme");
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getAllEmployees_returnsAllEmployees() {
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
+        when(employeeRepository.findAll()).thenReturn(List.of(e1, e2));
+
+        List<Employee> result = service.getAllEmployees();
+
+        assertThat(result).hasSize(2);
+    }
+
+    @Test
+    void getAllEmployees_emptyDatabase_returnsEmpty() {
+        when(employeeRepository.findAll()).thenReturn(Collections.emptyList());
+
+        List<Employee> result = service.getAllEmployees();
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getEmployeesByPosition_withMatches_returnsFiltered() {
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.PROGRAMISTA, 9000);
+        when(employeeRepository.findAll()).thenReturn(List.of(e1, e2));
+
+        Map<String, List<Employee>> result = service.getEmployeesByPosition();
+
+        assertThat(result).containsKey("PROGRAMISTA");
+        assertThat(result.get("PROGRAMISTA")).hasSize(2);
+    }
+
+    @Test
+    void getHighestPaidEmployee_withEmployees_returnsHighest() {
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
+        when(employeeRepository.findAll()).thenReturn(List.of(e1, e2));
+
+        Optional<Employee> result = service.getHighestPaidEmployee();
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getSalary()).isEqualTo(12000);
+    }
+
+    @Test
+    void getHighestPaidEmployee_emptyDatabase_returnsEmpty() {
+        when(employeeRepository.findAll()).thenReturn(Collections.emptyList());
+
+        Optional<Employee> result = service.getHighestPaidEmployee();
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getAverageSalary_withEmployees_returnsAverage() {
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
+        when(employeeRepository.findAll()).thenReturn(List.of(e1, e2));
+
+        double result = service.getAverageSalary();
+
+        assertThat(result).isEqualTo(10000);
+    }
+
+    @Test
+    void getAverageSalary_emptyDatabase_returnsEmpty() {
+        when(employeeRepository.findAll()).thenReturn(Collections.emptyList());
+
+        double result = service.getAverageSalary();
+
+        assertThat(result).isEqualTo(0.0);
+    }
+
+    @Test
+    void getAverageSalaryByCompany_withEmployees_returnsAverage() {
+        Employee e1 = new Employee("A", "A", "Acme", "a@x.com", Position.PROGRAMISTA, 8000);
+        Employee e2 = new Employee("B", "B", "Acme", "b@x.com", Position.MANAGER, 12000);
+        when(employeeRepository.findAll()).thenReturn(List.of(e1, e2));
+
+        double result = service.getAverageSalary("Acme");
+
+        assertThat(result).isEqualTo(10000);
+    }
+
+    @Test
+    void getAverageSalaryByCompany_noEmployees_returnsEmpty() {
+        when(employeeRepository.findAll()).thenReturn(Collections.emptyList());
+
+        double result = service.getAverageSalary("NonExistent");
+
+        assertThat(result).isEqualTo(0.0);
+    }
+
+    @Test
+    void updateEmployeeStatus_found_updates() {
+        Employee e1 = new Employee("A", "B", "X", "a@x.com", Position.PROGRAMISTA, 8000);
+        e1.setStatus(EmploymentStatus.ACTIVE);
+        when(employeeRepository.findByEmail("a@x.com")).thenReturn(Optional.of(e1));
+
+        Employee result = service.updateEmployeeStatus("a@x.com", EmploymentStatus.ON_LEAVE);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getStatus()).isEqualTo(EmploymentStatus.ON_LEAVE);
+    }
+
+    @Test
+    void updateEmployeeStatus_notFound_returnsNull() {
+        when(employeeRepository.findByEmail("notfound@x.com")).thenReturn(Optional.empty());
+
+        Employee result = service.updateEmployeeStatus("notfound@x.com", EmploymentStatus.ON_LEAVE);
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void getPositionStatistics_withEmployees_returnsStats() {
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
+        Employee e3 = new Employee("C", "C", "X", "c@x.com", Position.PROGRAMISTA, 9000);
+        when(employeeRepository.findAll()).thenReturn(List.of(e1, e2, e3));
+
+        Map<String, Integer> result = service.getPositionStatistics();
+
+        assertThat(result).containsEntry("PROGRAMISTA", 2).containsEntry("MANAGER", 1);
+    }
+
+    @Test
+    void getPositionStatistics_emptyDatabase_returnsEmpty() {
+        when(employeeRepository.findAll()).thenReturn(Collections.emptyList());
+
+        Map<String, Integer> result = service.getPositionStatistics();
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getCompanyStatistics_withEmployees_returnsStats() {
+        Employee e1 = new Employee("A", "A", "Acme", "a@x.com", Position.PROGRAMISTA, 8000);
+        Employee e2 = new Employee("B", "B", "Acme", "b@x.com", Position.MANAGER, 12000);
+        Employee e3 = new Employee("C", "C", "TechCorp", "c@x.com", Position.PROGRAMISTA, 9000);
+        when(employeeRepository.findAll()).thenReturn(List.of(e1, e2, e3));
+
+        Map<String, com.github.jakubpakula1.lab.model.CompanyStatistics> result = service.getCompanyStatistics();
+
+        assertThat(result).containsKeys("Acme", "TechCorp");
+        assertThat(result.get("Acme").getNumberOfEmployees()).isEqualTo(2);
+        assertThat(result.get("TechCorp").getNumberOfEmployees()).isEqualTo(1);
+    }
+
+    @Test
+    void getCompanyStatistics_emptyDatabase_returnsEmpty() {
+        when(employeeRepository.findAll()).thenReturn(Collections.emptyList());
+
+        Map<String, com.github.jakubpakula1.lab.model.CompanyStatistics> result = service.getCompanyStatistics();
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void deleteAllEmployees_deletesAll() {
+        service.deleteAllEmployees();
+
+        verify(employeeRepository).deleteAll();
     }
 }

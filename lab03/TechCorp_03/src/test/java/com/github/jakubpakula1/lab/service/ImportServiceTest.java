@@ -1,20 +1,18 @@
 package com.github.jakubpakula1.lab.service;
 
-import com.github.jakubpakula1.lab.dao.EmployeeDAO;
 import com.github.jakubpakula1.lab.model.ImportSummary;
 import com.github.jakubpakula1.lab.model.Position;
+import com.github.jakubpakula1.lab.repository.EmployeeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 
 
 import static org.assertj.core.api.Assertions.*;
@@ -24,7 +22,7 @@ import static org.mockito.Mockito.*;
 public class ImportServiceTest {
 
     @Mock
-    private EmployeeDAO employeeDAO;
+    private EmployeeRepository employeeRepository;
 
     private EmployeeService employeeService;
 
@@ -32,7 +30,7 @@ public class ImportServiceTest {
 
     @BeforeEach
     void setUp() {
-        employeeService = new EmployeeService(employeeDAO);
+        employeeService = new EmployeeService(employeeRepository);
         importService = new ImportService(employeeService);
     }
 
@@ -42,7 +40,7 @@ public class ImportServiceTest {
     void importFromCsv_singleValidRow_importedSuccessfully(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA;8000\n";
+                "Jan;Kowalski;jan@techcorp.com;X;PROGRAMISTA;8000\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
@@ -50,102 +48,102 @@ public class ImportServiceTest {
         assertThat(summary).isNotNull();
         assertThat(summary.getImportedEmployees()).isEqualTo(1);
         assertThat(summary.getErrors()).isEmpty();
-        verify(employeeDAO).deleteAll();
-        verify(employeeDAO).save(any());
+        verify(employeeRepository).deleteAll();
+        verify(employeeRepository).save(any());
     }
 
     @Test
     void importFromCsv_multipleValidRows_importedSuccessfully(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA;8000\n" +
-                "Anna;Nowak;anna@y.com;Y;MANAGER;12000\n" +
-                "Piotr;Lewandowski;piotr@z.com;Z;WICEPREZES;9500\n";
+                "Jan;Kowalski;jan@techcorp.com;X;PROGRAMISTA;8000\n" +
+                "Anna;Nowak;anna@techcorp.com;Y;MANAGER;12000\n" +
+                "Piotr;Lewandowski;piotr@techcorp.com;Z;WICEPREZES;9500\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
         assertThat(summary.getImportedEmployees()).isEqualTo(3);
         assertThat(summary.getErrors()).isEmpty();
-        verify(employeeDAO, times(3)).save(any());
+        verify(employeeRepository, times(3)).save(any());
     }
 
     @Test
     void importFromCsv_validRow_parsesFirstName(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA;8000\n";
+                "Jan;Kowalski;jan@techcorp.com;X;PROGRAMISTA;8000\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
         assertThat(summary.getImportedEmployees()).isEqualTo(1);
-        verify(employeeDAO).save(argThat(emp -> emp.getName().equals("Jan")));
+        verify(employeeRepository).save(argThat(emp -> emp.getName().equals("Jan")));
     }
 
     @Test
     void importFromCsv_validRow_parsesLastName(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA;8000\n";
+                "Jan;Kowalski;jan@techcorp.com;X;PROGRAMISTA;8000\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
         assertThat(summary.getImportedEmployees()).isEqualTo(1);
-        verify(employeeDAO).save(argThat(emp -> emp.getSurname().equals("Kowalski")));
+        verify(employeeRepository).save(argThat(emp -> emp.getSurname().equals("Kowalski")));
     }
 
     @Test
     void importFromCsv_validRow_parsesCompanyName(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;Acme Corp;PROGRAMISTA;8000\n";
+                "Jan;Kowalski;jan@techcorp.com;Acme Corp;PROGRAMISTA;8000\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
         assertThat(summary.getImportedEmployees()).isEqualTo(1);
-        verify(employeeDAO).save(argThat(emp -> emp.getCompany().equals("Acme Corp")));
+        verify(employeeRepository).save(argThat(emp -> emp.getCompany().equals("Acme Corp")));
     }
 
     @Test
     void importFromCsv_validRow_parsesPosition(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Anna;Nowak;anna@y.com;Y;MANAGER;12000\n";
+                "Anna;Nowak;anna@techcorp.com;Y;MANAGER;12000\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
         assertThat(summary.getImportedEmployees()).isEqualTo(1);
-        verify(employeeDAO).save(argThat(emp -> emp.getPosition() == Position.MANAGER));
+        verify(employeeRepository).save(argThat(emp -> emp.getPosition() == Position.MANAGER));
     }
 
     @Test
     void importFromCsv_validRow_parsesSalary(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA;15000\n";
+                "Jan;Kowalski;jan@techcorp.com;X;PROGRAMISTA;15000\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
         assertThat(summary.getImportedEmployees()).isEqualTo(1);
-        verify(employeeDAO).save(argThat(emp -> emp.getSalary() == 15000));
+        verify(employeeRepository).save(argThat(emp -> emp.getSalary() == 15000));
     }
 
     @Test
     void importFromCsv_validRow_trimsWhitespace(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "  Jan  ;  Kowalski  ;  jan@x.com  ;  X  ;  PROGRAMISTA  ;  8000  \n";
+                "  Jan  ;  Kowalski  ;  jan@techcorp.com  ;  X  ;  PROGRAMISTA  ;  8000  \n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
         assertThat(summary.getImportedEmployees()).isEqualTo(1);
-        verify(employeeDAO).save(argThat(emp -> emp.getName().equals("Jan")));
+        verify(employeeRepository).save(argThat(emp -> emp.getName().equals("Jan")));
     }
 
     @Test
@@ -158,14 +156,14 @@ public class ImportServiceTest {
 
         assertThat(summary.getImportedEmployees()).isEqualTo(0);
         assertThat(summary.getErrors()).isEmpty();
-        verify(employeeDAO, never()).save(any());
+        verify(employeeRepository, never()).save(any());
     }
 
     @Test
     void importFromCsv_invalidPosition_addsError(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;INVALID_POSITION;8000\n";
+                "Jan;Kowalski;jan@techcorp.com;X;INVALID_POSITION;8000\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
@@ -174,14 +172,14 @@ public class ImportServiceTest {
         assertThat(summary.getErrors()).hasSize(1)
                 .extracting("errorMessage")
                 .allMatch(msg -> msg.toString().contains("Invalid position"));
-        verify(employeeDAO, never()).save(any());
+        verify(employeeRepository, never()).save(any());
     }
 
     @Test
     void importFromCsv_invalidPosition_specifiesLineNumber(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;INVALID_POS;8000\n";
+                "Jan;Kowalski;jan@techcorp.com;X;INVALID_POS;8000\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
@@ -195,21 +193,21 @@ public class ImportServiceTest {
     void importFromCsv_invalidPosition_caseInsensitive(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;programista;8000\n";
+                "Jan;Kowalski;jan@techcorp.com;X;programista;8000\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
         assertThat(summary.getImportedEmployees()).isEqualTo(1);
-        verify(employeeDAO).save(any());
+        verify(employeeRepository).save(any());
     }
 
     @Test
     void importFromCsv_multipleInvalidPositions_addsMultipleErrors(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;INVALID1;8000\n" +
-                "Anna;Nowak;anna@y.com;Y;INVALID2;12000\n";
+                "Jan;Kowalski;jan@techcorp.com;X;INVALID1;8000\n" +
+                "Anna;Nowak;anna@techcorp.com;Y;INVALID2;12000\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
@@ -217,14 +215,14 @@ public class ImportServiceTest {
         assertThat(summary.getErrors()).hasSize(2)
                 .extracting("lineNumber")
                 .containsExactly(2, 3);
-        verify(employeeDAO, never()).save(any());
+        verify(employeeRepository, never()).save(any());
     }
 
     @Test
     void importFromCsv_invalidSalary_addsError(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA;not_a_number\n";
+                "Jan;Kowalski;jan@techcorp.com;X;PROGRAMISTA;not_a_number\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
@@ -233,14 +231,14 @@ public class ImportServiceTest {
         assertThat(summary.getErrors()).hasSize(1)
                 .extracting("errorMessage")
                 .allMatch(msg -> msg.toString().contains("Invalid salary value"));
-        verify(employeeDAO, never()).save(any());
+        verify(employeeRepository, never()).save(any());
     }
 
     @Test
     void importFromCsv_invalidSalary_specifiesLineNumber(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA;abc\n";
+                "Jan;Kowalski;jan@techcorp.com;X;PROGRAMISTA;abc\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
@@ -254,21 +252,21 @@ public class ImportServiceTest {
     void importFromCsv_negativeSalary_importedSuccessfully(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA;-1000\n";
+                "Jan;Kowalski;jan@techcorp.com;X;PROGRAMISTA;-1000\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
         assertThat(summary.getImportedEmployees()).isEqualTo(1);
-        verify(employeeDAO).save(argThat(emp -> emp.getSalary() == -1000));
+        verify(employeeRepository).save(argThat(emp -> emp.getSalary() == -1000));
     }
 
     @Test
     void importFromCsv_multipleInvalidSalaries_addsMultipleErrors(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA;invalid1\n" +
-                "Anna;Nowak;anna@y.com;Y;MANAGER;invalid2\n";
+                "Jan;Kowalski;jan@techcorp.com;X;PROGRAMISTA;invalid1\n" +
+                "Anna;Nowak;anna@techcorp.com;Y;MANAGER;invalid2\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
@@ -282,7 +280,7 @@ public class ImportServiceTest {
     void importFromCsv_tooFewColumns_addsError(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com\n";
+                "Jan;Kowalski;jan@techcorp.com\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
@@ -297,7 +295,7 @@ public class ImportServiceTest {
     void importFromCsv_tooFewColumns_specifiesLineNumber(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA\n";
+                "Jan;Kowalski;jan@techcorp.com;X;PROGRAMISTA\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
@@ -312,7 +310,7 @@ public class ImportServiceTest {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
                 "Jan;Kowalski\n" +
-                "Anna;Nowak;anna@y.com\n";
+                "Anna;Nowak;anna@techcorp.com\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
@@ -326,32 +324,32 @@ public class ImportServiceTest {
     void importFromCsv_validAndInvalidRows_summaryCorrect(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA;8000\n" +
-                "Anna;Nowak;anna@y.com;Y;INVALID_POS;5000\n" +
-                "Piotr;Z;piotr@z.com;Z;MANAGER;not_a_number\n" +
-                "Bob;Smith;bob@a.com;A;WICEPREZES;10000\n";
+                "Jan;Kowalski;jan@techcorp.com;X;PROGRAMISTA;8000\n" +
+                "Anna;Nowak;anna@techcorp.com;Y;INVALID_POS;5000\n" +
+                "Piotr;Lewandowski;piotr@techcorp.com;Z;MANAGER;9500\n" +
+                "Bob;Smith;bob@techcorp.com;A;WICEPREZES;10000\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
-        assertThat(summary.getImportedEmployees()).isEqualTo(2);
-        assertThat(summary.getErrors()).hasSize(2);
-        verify(employeeDAO, times(2)).save(any());
+        assertThat(summary.getImportedEmployees()).isEqualTo(3);
+        assertThat(summary.getErrors()).hasSize(1);
+        verify(employeeRepository, times(3)).save(any());
     }
 
     @Test
     void importFromCsv_validAndInvalidRows_validRowsImported(@TempDir Path tempDir) throws IOException {
         Path csv = tempDir.resolve("test.csv");
         String content = "firstName;lastName;email;company;position;salary\n" +
-                "Jan;Kowalski;jan@x.com;X;PROGRAMISTA;8000\n" +
-                "Anna;Nowak;anna@y.com;Y;INVALID_POS;5000\n" +
-                "Piotr;Lewandowski;piotr@z.com;Z;MANAGER;9500\n";
+                "Jan;Kowalski;jan@techcorp.com;X;PROGRAMISTA;8000\n" +
+                "Anna;Nowak;anna@techcorp.com;Y;INVALID_POS;5000\n" +
+                "Piotr;Lewandowski;piotr@techcorp.com;Z;MANAGER;9500\n";
         Files.writeString(csv, content);
 
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
         assertThat(summary.getImportedEmployees()).isEqualTo(2);
-        verify(employeeDAO, times(2)).save(any());
+        verify(employeeRepository, times(2)).save(any());
     }
 
     @Test
@@ -375,7 +373,7 @@ public class ImportServiceTest {
 
     @Test
     void constructor_withEmployeeService_createsInstance() {
-        EmployeeService service = new EmployeeService(employeeDAO);
+        EmployeeService service = new EmployeeService(employeeRepository);
         ImportService importService = new ImportService(service);
 
         assertThat(importService).isNotNull();

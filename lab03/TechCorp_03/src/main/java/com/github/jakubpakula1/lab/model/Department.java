@@ -1,12 +1,31 @@
 package com.github.jakubpakula1.lab.model;
 
-public class Department {
+import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "departaments")
+public class Department {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
     private  String name;
+
+    @Column(nullable = false)
     private String location;
+
+    @Column(nullable = false)
     private double budget;
+
+    @Column(nullable = false)
     private String managerEmail;
+
+    @OneToMany(mappedBy = "department", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Employee> employees = new ArrayList<>();
 
     public Department() {
     }
@@ -57,5 +76,23 @@ public class Department {
 
     public void setManagerEmail(String managerEmail) {
         this.managerEmail = managerEmail;
+    }
+
+    public List<Employee> getEmployees() {
+        return employees;
+    }
+
+    public void setEmployees(List<Employee> employees) {
+        this.employees = employees;
+    }
+
+    public void addEmployee(Employee employee) {
+        employees.add(employee);
+        employee.setDepartment(this);
+    }
+
+    public void removeEmployee(Employee employee) {
+        employees.remove(employee);
+        employee.setDepartment(null);
     }
 }

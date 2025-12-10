@@ -2,16 +2,36 @@ package com.github.jakubpakula1.lab.dto;
 
 import com.github.jakubpakula1.lab.model.EmploymentStatus;
 import com.github.jakubpakula1.lab.model.Position;
+import com.github.jakubpakula1.lab.validation.TechCorpEmail;
+import jakarta.validation.constraints.*;
 import java.util.Objects;
 
 public class EmployeeDTO {
+    @NotBlank(message = "Imię nie może być puste")
+    @Size(min = 2, message = "Imię musi mieć co najmniej 2 znaki")
     private String firstName;
+    
+    @NotBlank(message = "Nazwisko nie może być puste")
+    @Size(min = 2, message = "Nazwisko musi mieć co najmniej 2 znaki")
     private String lastName;
+    
+    @NotBlank(message = "Email nie może być pusty")
+    @Email(message = "Email musi mieć poprawny format")
+    @TechCorpEmail(message = "Email musi posiadać domenę @techcorp.com")
     private String email;
+    
+    @NotBlank(message = "Firma nie może być pusta")
     private String company;
+    
+    @NotNull(message = "Stanowisko nie może być puste")
     private Position position;
+    
+    @Positive(message = "Pensja musi być większa od 0")
     private int salary;
+    
+    @NotNull(message = "Status nie może być pusty")
     private EmploymentStatus status;
+    
     private Long departmentId;
 
     public EmployeeDTO() {}

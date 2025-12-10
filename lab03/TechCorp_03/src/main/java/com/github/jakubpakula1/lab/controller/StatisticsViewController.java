@@ -29,7 +29,7 @@ public class StatisticsViewController {
 
     @GetMapping
     public String displayDashboard(Model model) {
-        List<Employee> allEmployees = employeeService.getEmployees();
+        List<Employee> allEmployees = employeeService.getAllEmployees();
         int totalEmployees = allEmployees.size();
         double averageSalary = employeeService.getAverageSalary();
         int totalDepartments = departmentService.getAllDepartments().size();

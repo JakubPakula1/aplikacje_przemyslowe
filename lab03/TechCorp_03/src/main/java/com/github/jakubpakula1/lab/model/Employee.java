@@ -1,28 +1,58 @@
 package com.github.jakubpakula1.lab.model;
-
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+import com.github.jakubpakula1.lab.validation.TechCorpEmail;
 import java.util.Objects;
-
+@Entity
+@Table(name = "employees")
 public class Employee {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
-    private String surname;
-    private String email;
-    private String company;
-    private Position position;
-    private int salary;
-    private EmploymentStatus status;
-    private String photoFileName;
-    private Long departmentId;
 
-    public Employee(String name, String surname, String company, String email, String position, int salary, String status, Long departmentId) {
-        this.name = name;
-        this.surname = surname;
-        this.company = company;
-        this.email = email;
-        this.position = Position.valueOf(position.toUpperCase());
-        this.salary = salary;
-        this.status = EmploymentStatus.valueOf(status.toUpperCase());
-        this.departmentId = departmentId;
+    @Column(name = "FIRST_NAME", nullable = false)
+    @NotBlank(message = "Imię nie może być puste")
+    @Size(min = 2, message = "Imię musi mieć co najmniej 2 znaki")
+    private String name;
+
+    @Column(name = "LAST_NAME", nullable = false)
+    @NotBlank(message = "Nazwisko nie może być puste")
+    @Size(min = 2, message = "Nazwisko musi mieć co najmniej 2 znaki")
+    private String surname;
+
+    @Column(nullable = false, unique = true)
+    @NotBlank(message = "Email nie może być pusty")
+    @Email(message = "Email musi mieć poprawny format")
+    @TechCorpEmail(message = "Email musi posiadać domenę @techcorp.com")
+    private String email;
+
+    @Column(nullable = false)
+    @NotBlank(message = "Firma nie może być pusta")
+    private String company;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @NotNull(message = "Stanowisko nie może być puste")
+    private Position position;
+
+    @Column(nullable = false)
+    @Positive(message = "Pensja musi być większa od 0")
+    private int salary;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @NotNull(message = "Status nie może być pusty")
+    private EmploymentStatus status;
+
+    @Column
+    private String photoFileName;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "departament_id")
+    private Department department;
+
+    protected Employee() {
+
     }
 
     public Employee(String name, String surname, String company, String email, Position position, int salary) {
@@ -32,10 +62,6 @@ public class Employee {
         this.email = email;
         this.position = position;
         this.salary = salary;
-    }
-
-    public Employee() {
-
     }
 
     public Long getId() {
@@ -110,16 +136,16 @@ public class Employee {
         this.photoFileName = photoFileName;
     }
 
-    public Long getDepartmentId() {
-        return departmentId;
+    public Department getDepartment() {
+        return department;
     }
 
-    public void setDepartmentId(Long departmentId) {
-        this.departmentId = departmentId;
+    public void setDepartment(Department department) {
+        this.department = department;
     }
 
     public String getFullName(){
-        return this.name + " " + this.getSurname();
+        return this.name + " " + this.getName();
     }
     @Override
     public boolean equals(Object o) {
@@ -129,7 +155,9 @@ public class Employee {
         if(email == null || employee.email == null) return false;
         return email.equalsIgnoreCase(employee.email);
     }
-
+    public Long getDepartmentId() {
+        return department != null ? department.getId() : null;
+    }
     @Override
     public int hashCode() {
         return Objects.hash(email == null ? null : email.toLowerCase());
