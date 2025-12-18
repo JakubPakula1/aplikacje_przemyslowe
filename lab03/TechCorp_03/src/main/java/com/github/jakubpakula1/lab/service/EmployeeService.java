@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -188,7 +189,9 @@ public class EmployeeService {
         return getAllEmployees().stream()
                 .filter(Objects::nonNull)
                 .filter(e -> company == null || company.isBlank() || company.equalsIgnoreCase(e.getCompany()))
-                .mapToInt(Employee::getSalary)
+                .map(Employee::getSalary)
+                .filter(Objects::nonNull)
+                .mapToDouble(BigDecimal::doubleValue)
                 .average()
                 .orElse(0.0);
     }
@@ -207,107 +210,129 @@ public class EmployeeService {
         return getAllEmployees().stream()
                 .filter(Objects::nonNull)
                 .filter(e -> e.getPosition() != null)
-                .max(Comparator.comparingDouble(e -> e.getPosition().getBaseSalary()));
+                .max(Comparator.comparing(
+                        e -> e.getPosition().getBaseSalary(),
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ));
     }
 
     @Transactional(readOnly = true)
     public List<Employee> validateSalaryConsistency() {
         return getAllEmployees().stream()
                 .filter(Objects::nonNull)
-                .filter(e -> e.getPosition() != null)
-                .filter(e -> e.getSalary() < e.getPosition().getBaseSalary())
+                .filter(e -> e.getPosition() != null && e.getSalary() != null && e.getPosition().getBaseSalary() != null)
+                .filter(e -> e.getSalary().compareTo(e.getPosition().getBaseSalary()) < 0)
                 .collect(Collectors.toList());
     }
 
-@Transactional(readOnly = true)
-public Map<String, CompanyStatistics> getCompanyStatistics() {
-    return getAllEmployees().stream()
-            .filter(Objects::nonNull)
-            .collect(Collectors.groupingBy(
-                    Employee::getCompany,
-                    Collectors.collectingAndThen(
-                            Collectors.toList(),
-                            employees -> new CompanyStatistics(
-                                    employees.get(0).getCompany(),
-                                    employees.size(),
-                                    employees.stream()
-                                            .mapToInt(Employee::getSalary)
-                                            .average()
-                                            .orElse(0.0),
-                                    employees.stream()
-                                            .max(Comparator.comparingInt(Employee::getSalary))
-                                            .map(e -> e.getName() + " " + e.getName())
-                                            .orElse("")
-                            )
-                    )
-            ));
-}
-
-@Transactional(readOnly = true)
-public Optional<CompanyStatistics> getCompanyStatistics(String company) {
-    if (company == null || company.isBlank()) {
-        return Optional.empty();
+    @Transactional(readOnly = true)
+    public Map<String, CompanyStatistics> getCompanyStatistics() {
+        return getAllEmployees().stream()
+                .filter(Objects::nonNull)
+                .collect(Collectors.groupingBy(
+                        Employee::getCompany,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                employees -> new CompanyStatistics(
+                                        employees.get(0).getCompany(),
+                                        employees.size(),
+                                        employees.stream()
+                                                .map(Employee::getSalary)
+                                                .filter(Objects::nonNull)
+                                                .mapToDouble(BigDecimal::doubleValue)
+                                                .average()
+                                                .orElse(0.0),
+                                        employees.stream()
+                                                .max(Comparator.comparing(
+                                                        Employee::getSalary,
+                                                        Comparator.nullsLast(Comparator.naturalOrder())
+                                                ))
+                                                .map(e -> e.getName() + " " + e.getName())
+                                                .orElse("")
+                                )
+                        )
+                ));
     }
 
-    return getAllEmployees().stream()
-            .filter(Objects::nonNull)
-            .filter(e -> e.getCompany() != null && e.getCompany().equalsIgnoreCase(company.trim()))
-            .collect(Collectors.collectingAndThen(
-                    Collectors.toList(),
-                    employees -> employees.isEmpty() ? Optional.empty() : Optional.of(
-                            new CompanyStatistics(
-                                    company.trim(),
-                                    employees.size(),
-                                    employees.stream()
-                                            .mapToInt(Employee::getSalary)
-                                            .average()
-                                            .orElse(0.0),
-                                    employees.stream()
-                                            .max(Comparator.comparingInt(Employee::getSalary))
-                                            .map(e -> e.getName() + " " + e.getName())
-                                            .orElse("")
-                            )
-                    )
-            ));
-}
+    @Transactional(readOnly = true)
+    public Optional<CompanyStatistics> getCompanyStatistics(String company) {
+        if (company == null || company.isBlank()) {
+            return Optional.empty();
+        }
 
-@Transactional(readOnly = true)
-public Optional<CompanyStatisticsDTO> getCompanyStatisticsDTO(String company) {
-    if (company == null || company.isBlank()) {
-        return Optional.empty();
+        return getAllEmployees().stream()
+                .filter(Objects::nonNull)
+                .filter(e -> e.getCompany() != null && e.getCompany().equalsIgnoreCase(company.trim()))
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        employees -> employees.isEmpty() ? Optional.empty() : Optional.of(
+                                new CompanyStatistics(
+                                        company.trim(),
+                                        employees.size(),
+                                        employees.stream()
+                                                .map(Employee::getSalary)
+                                                .filter(Objects::nonNull)
+                                                .mapToDouble(BigDecimal::doubleValue)
+                                                .average()
+                                                .orElse(0.0),
+                                        employees.stream()
+                                                .max(Comparator.comparing(
+                                                        Employee::getSalary,
+                                                        Comparator.nullsLast(Comparator.naturalOrder())
+                                                ))
+                                                .map(e -> e.getName() + " " + e.getName())
+                                                .orElse("")
+                                )
+                        )
+                ));
     }
 
-    String name = company.trim();
-    List<Employee> companyEmployees = getCompanyEmployees(name);
+    @Transactional(readOnly = true)
+    public Optional<CompanyStatisticsDTO> getCompanyStatisticsDTO(String company) {
+        if (company == null || company.isBlank()) {
+            return Optional.empty();
+        }
 
-    if (companyEmployees.isEmpty()) {
-        return Optional.empty();
+        String name = company.trim();
+        List<Employee> companyEmployees = getCompanyEmployees(name);
+
+        if (companyEmployees.isEmpty()) {
+            return Optional.empty();
+        }
+
+        double highestSalaryDouble = companyEmployees.stream()
+                .map(Employee::getSalary)
+                .filter(Objects::nonNull)
+                .mapToDouble(BigDecimal::doubleValue)
+                .max()
+                .orElse(0.0);
+
+        int highestSalary = (int) highestSalaryDouble;
+
+        String bestEarner = companyEmployees.stream()
+                .max(Comparator.comparing(
+                        Employee::getSalary,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ))
+                .map(e -> e.getName() + " " + e.getName())
+                .orElse("");
+
+        double averageSalary = companyEmployees.stream()
+                .map(Employee::getSalary)
+                .filter(Objects::nonNull)
+                .mapToDouble(BigDecimal::doubleValue)
+                .average()
+                .orElse(0.0);
+
+        CompanyStatisticsDTO dto = new CompanyStatisticsDTO(
+                name,
+                companyEmployees.size(),
+                averageSalary,
+                highestSalary,
+                bestEarner
+        );
+        return Optional.of(dto);
     }
-
-    int highestSalary = companyEmployees.stream()
-            .mapToInt(Employee::getSalary)
-            .max()
-            .orElse(0);
-
-    String bestEarner = companyEmployees.stream()
-            .max(Comparator.comparingInt(Employee::getSalary))
-            .map(e -> e.getName() + " " + e.getName())
-            .orElse("");
-
-    double averageSalary = companyEmployees.stream()
-            .mapToInt(Employee::getSalary)
-            .average()
-            .orElse(0.0);
-
-    CompanyStatisticsDTO dto = new CompanyStatisticsDTO(
-            name,
-            companyEmployees.size(),
-            averageSalary,
-            highestSalary,
-            bestEarner
-    );
-    return Optional.of(dto);
-}
     @Transactional
     public Employee updateEmployeeStatus(String email, EmploymentStatus status) {
         if (email == null || email.isBlank() || status == null) {

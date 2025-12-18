@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -45,7 +46,7 @@ class DepartmentViewControllerTest {
 
     @BeforeEach
     void setUp() {
-        testManager = new Employee("Jan", "Kowalski", "Company", "jan@example.com", Position.MANAGER, 8000);
+        testManager = new Employee("Jan", "Kowalski", "Company", "jan@example.com", Position.MANAGER, BigDecimal.valueOf(8000));
 
         testDepartment = new Department(1L, "IT", "Warsaw", 100000.0, "jan@example.com");
 
@@ -58,7 +59,7 @@ class DepartmentViewControllerTest {
         when(departmentService.getAllDepartments()).thenReturn(testDepartments);
         when(employeeService.getEmployeeByEmail("jan@example.com")).thenReturn(testManager);
         when(employeeService.getEmployeeByEmail("manager2@example.com")).thenReturn(
-                new Employee("Jane", "Smith", "TestCompany", "manager2@example.com", Position.MANAGER, 7000)
+                new Employee("Jane", "Smith", "TestCompany", "manager2@example.com", Position.MANAGER, BigDecimal.valueOf(7000))
         );
 
         mockMvc.perform(get("/departments"))

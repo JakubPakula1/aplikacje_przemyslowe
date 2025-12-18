@@ -21,6 +21,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -55,13 +56,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         private Employee testEmployee;
         @BeforeEach
         void setUp() {
-            emp1 = new Employee("Jan", "Kowalski", "Google", "jan@techcorp.com", Position.PROGRAMISTA, 8000);
+            emp1 = new Employee("Jan", "Kowalski", "Google", "jan@techcorp.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
             emp1.setStatus(EmploymentStatus.ACTIVE);
 
-            emp2 = new Employee("Anna", "Nowak", "Microsoft", "anna@techcorp.com", Position.MANAGER, 12000);
+            emp2 = new Employee("Anna", "Nowak", "Microsoft", "anna@techcorp.com", Position.MANAGER, BigDecimal.valueOf(12000));
             emp2.setStatus(EmploymentStatus.ACTIVE);
 
-            testEmployee = new Employee("John", "Doe", "TestCompany", "john@techcorp.com", Position.PROGRAMISTA, 5000);
+            testEmployee = new Employee("John", "Doe", "TestCompany", "john@techcorp.com", Position.PROGRAMISTA, BigDecimal.valueOf(5000));
             testEmployee.setStatus(EmploymentStatus.ACTIVE);
 
             testEmployees = Arrays.asList(emp1, emp2);

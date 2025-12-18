@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -109,7 +110,9 @@ public class EmployeeController {
         String surname = employeeDTO.getSurname() != null ? employeeDTO.getSurname() : existing.getName();
         String company = employeeDTO.getCompany() != null ? employeeDTO.getCompany() : existing.getCompany();
         Position position = employeeDTO.getPosition() != null ? employeeDTO.getPosition() : existing.getPosition();
-        int salary = employeeDTO.getSalary() != 0 ? employeeDTO.getSalary() : existing.getSalary();
+        BigDecimal salary = employeeDTO.getSalary() != null && employeeDTO.getSalary().compareTo(BigDecimal.ZERO) != 0
+                ? employeeDTO.getSalary()
+                : existing.getSalary();
         EmploymentStatus status = employeeDTO.getStatus() != null ? employeeDTO.getStatus() : existing.getStatus();
 
         Employee updated = new Employee(

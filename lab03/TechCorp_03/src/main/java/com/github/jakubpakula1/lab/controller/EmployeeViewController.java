@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -58,7 +59,7 @@ public class EmployeeViewController {
 
     @GetMapping("/add")
     public String addEmployeeForm(Model model) {
-        model.addAttribute("employee", new Employee("", "", "", "", Position.PROGRAMISTA, 0));
+        model.addAttribute("employee", new Employee("", "", "", "", Position.PROGRAMISTA, BigDecimal.valueOf(0)));
         model.addAttribute("positions", Position.values());
         model.addAttribute("employmentStatuses", EmploymentStatus.values());
         model.addAttribute("departments", this.departmentService.getAllDepartments());
@@ -83,7 +84,7 @@ public class EmployeeViewController {
         if (employee.getCompany() == null || employee.getCompany().trim().isEmpty()) {
             bindingResult.rejectValue("company", "error.company", "Firma jest wymagana");
         }
-        if (employee.getSalary() < 0) {
+        if (employee.getSalary().compareTo(BigDecimal.ZERO) < 0) {
             bindingResult.rejectValue("salary", "error.salary", "Wynagrodzenie nie może być ujemne");
         }
 
@@ -130,7 +131,7 @@ public class EmployeeViewController {
         if (employee.getName() == null || employee.getName().trim().isEmpty()) {
             bindingResult.rejectValue("surname", "error.surname", "Nazwisko jest wymagane");
         }
-        if (employee.getSalary() < 0) {
+        if (employee.getSalary().compareTo(BigDecimal.ZERO) < 0) {
             bindingResult.rejectValue("salary", "error.salary", "Wynagrodzenie nie może być ujemne");
         }
 

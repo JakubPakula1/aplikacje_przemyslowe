@@ -23,6 +23,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -59,7 +60,7 @@ class FileUploadControllerTest {
 
     @BeforeEach
     void setUp() {
-        testEmployee = new Employee("Jan", "Kowalski", "TechCorp", "jan.kowalski@example.com", Position.PROGRAMISTA, 5000);
+        testEmployee = new Employee("Jan", "Kowalski", "TechCorp", "jan.kowalski@example.com", Position.PROGRAMISTA, BigDecimal.valueOf(5000));
         testEmployee.setStatus(EmploymentStatus.ACTIVE);
 
         testSummary = new ImportSummary();

@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -130,7 +131,7 @@ public class ImportServiceTest {
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
         assertThat(summary.getImportedEmployees()).isEqualTo(1);
-        verify(employeeRepository).save(argThat(emp -> emp.getSalary() == 15000));
+        verify(employeeRepository).save(argThat(emp -> emp.getSalary().compareTo(BigDecimal.valueOf(15000)) == 0));
     }
 
     @Test
@@ -258,7 +259,7 @@ public class ImportServiceTest {
         ImportSummary summary = importService.importFromCsv(csv.toString());
 
         assertThat(summary.getImportedEmployees()).isEqualTo(1);
-        verify(employeeRepository).save(argThat(emp -> emp.getSalary() == -1000));
+        verify(employeeRepository).save(argThat(emp -> emp.getSalary().compareTo(BigDecimal.valueOf(-1000)) == 0));
     }
 
     @Test

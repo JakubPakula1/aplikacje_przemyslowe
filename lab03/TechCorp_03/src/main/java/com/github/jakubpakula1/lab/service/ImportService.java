@@ -18,6 +18,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigDecimal;
 
 @Service
 public class ImportService {
@@ -67,7 +68,7 @@ public class ImportService {
                         continue;
                     }
 
-                    Employee employee = new Employee(firstName, lastName, company, email, position, salary);
+                    Employee employee = new Employee(firstName, lastName, company, email, position, BigDecimal.valueOf(salary));
                     employee.setStatus(EmploymentStatus.ACTIVE);
                     employeeService.addEmployee(employee);
                     importedEmployees++;
@@ -171,7 +172,7 @@ public class ImportService {
                         continue;
                     }
 
-                    Employee employee = new Employee(name.trim(), surname.trim(), company.trim(), email.trim(), position, salary);
+                    Employee employee = new Employee(name.trim(), surname.trim(), company.trim(), email.trim(), position, BigDecimal.valueOf(salary));
 
                     String statusStr = getElementValue(empElement, "status");
                     EmploymentStatus status = EmploymentStatus.ACTIVE;

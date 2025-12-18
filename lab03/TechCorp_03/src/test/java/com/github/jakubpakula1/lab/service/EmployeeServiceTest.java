@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
@@ -25,7 +26,7 @@ public class EmployeeServiceTest {
 
     @Test
     void addEmployee_valid_succeeds() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
+        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
         when(employeeRepository.existsByEmail("jan@x.com")).thenReturn(false);
         when(employeeRepository.save(emp)).thenReturn(emp);
 
@@ -36,7 +37,7 @@ public class EmployeeServiceTest {
 
     @Test
     void addEmployee_duplicateEmail_throws() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
+        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
         when(employeeRepository.existsByEmail("jan@x.com")).thenReturn(true);
 
         assertThatThrownBy(() -> service.addEmployee(emp))
@@ -53,7 +54,7 @@ public class EmployeeServiceTest {
 
     @Test
     void displayWorkers_withEmployees_doesNotThrow() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
+        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
         when(employeeRepository.findAll()).thenReturn(List.of(emp));
 
         assertThatCode(() -> service.displayWorkers()).doesNotThrowAnyException();
@@ -84,7 +85,7 @@ public class EmployeeServiceTest {
 
     @Test
     void getCompanyEmployees_caseInsensitive_returnsEmployees() {
-        Employee emp = new Employee("Jan", "Kowalski", "Acme", "jan@x.com", Position.PROGRAMISTA, 8000);
+        Employee emp = new Employee("Jan", "Kowalski", "Acme", "jan@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
         when(employeeRepository.findByCompanyIgnoreCase("acme")).thenReturn(List.of(emp));
 
         List<Employee> result = service.getCompanyEmployees("acme");
@@ -103,8 +104,8 @@ public class EmployeeServiceTest {
 
     @Test
     void getEmployeesSortedByLastName_sortsByLastName() {
-        Employee emp1 = new Employee("Jan", "Zebra", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
-        Employee emp2 = new Employee("Anna", "Apple", "X", "anna@x.com", Position.MANAGER, 12000);
+        Employee emp1 = new Employee("Jan", "Zebra", "X", "jan@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
+        Employee emp2 = new Employee("Anna", "Apple", "X", "anna@x.com", Position.MANAGER, BigDecimal.valueOf(12000));
         when(employeeRepository.findAllByOrderBySurnameAsc()).thenReturn(List.of(emp2, emp1));
 
         List<Employee> result = service.getEmployeesSortedByLastName();
@@ -123,7 +124,7 @@ public class EmployeeServiceTest {
 
     @Test
     void getEmployeeByEmail_found_returnsEmployee() {
-        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, 8000);
+        Employee emp = new Employee("Jan", "Kowalski", "X", "jan@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
         when(employeeRepository.findByEmail("jan@x.com")).thenReturn(Optional.of(emp));
 
         Employee result = service.getEmployeeByEmail("jan@x.com");
@@ -133,7 +134,7 @@ public class EmployeeServiceTest {
 
     @Test
     void updateEmployee_notFound_returnsNull() {
-        Employee updated = new Employee("A", "B", "X", "a@x.com", Position.PROGRAMISTA, 8000);
+        Employee updated = new Employee("A", "B", "X", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
         when(employeeRepository.findByEmail("notfound@x.com")).thenReturn(Optional.empty());
 
         Employee result = service.updateEmployee("notfound@x.com", updated);
@@ -143,8 +144,8 @@ public class EmployeeServiceTest {
 
     @Test
     void updateEmployee_validUpdate_updatesEmployee() {
-        Employee e1 = new Employee("A", "B", "X", "old@x.com", Position.PROGRAMISTA, 8000);
-        Employee updated = new Employee("NewName", "NewSurname", "Y", "old@x.com", Position.MANAGER, 12000);
+        Employee e1 = new Employee("A", "B", "X", "old@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
+        Employee updated = new Employee("NewName", "NewSurname", "Y", "old@x.com", Position.MANAGER, BigDecimal.valueOf(12000));
         when(employeeRepository.findByEmail("old@x.com")).thenReturn(Optional.of(e1));
         when(employeeRepository.save(any())).thenReturn(e1);
 
@@ -156,8 +157,8 @@ public class EmployeeServiceTest {
 
     @Test
     void updateEmployee_changeEmail_updatesEmail() {
-        Employee e1 = new Employee("A", "B", "X", "old@x.com", Position.PROGRAMISTA, 8000);
-        Employee updated = new Employee("A", "B", "X", "new@x.com", Position.PROGRAMISTA, 8000);
+        Employee e1 = new Employee("A", "B", "X", "old@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
+        Employee updated = new Employee("A", "B", "X", "new@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
         when(employeeRepository.findByEmail("old@x.com")).thenReturn(Optional.of(e1));
         when(employeeRepository.findByEmail("new@x.com")).thenReturn(Optional.empty());
         when(employeeRepository.save(any())).thenReturn(e1);
@@ -170,10 +171,10 @@ public class EmployeeServiceTest {
 
     @Test
     void updateEmployee_changeEmailToDuplicate_throws() {
-        Employee e1 = new Employee("A", "B", "X", "old@x.com", Position.PROGRAMISTA, 8000);
-        Employee updated = new Employee("A", "B", "X", "duplicate@x.com", Position.PROGRAMISTA, 8000);
+        Employee e1 = new Employee("A", "B", "X", "old@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
+        Employee updated = new Employee("A", "B", "X", "duplicate@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
         when(employeeRepository.findByEmail("old@x.com")).thenReturn(Optional.of(e1));
-        when(employeeRepository.findByEmail("duplicate@x.com")).thenReturn(Optional.of(new Employee("C", "D", "X", "duplicate@x.com", Position.MANAGER, 12000)));
+        when(employeeRepository.findByEmail("duplicate@x.com")).thenReturn(Optional.of(new Employee("C", "D", "X", "duplicate@x.com", Position.MANAGER, BigDecimal.valueOf(12000))));
 
         assertThatThrownBy(() -> service.updateEmployee("old@x.com", updated))
                 .isInstanceOf(com.github.jakubpakula1.lab.exception.DuplicateEmailException.class);
@@ -190,7 +191,7 @@ public class EmployeeServiceTest {
 
     @Test
     void deleteEmployee_found_deletesAndReturnsTrue() {
-        Employee e1 = new Employee("A", "B", "X", "a@x.com", Position.PROGRAMISTA, 8000);
+        Employee e1 = new Employee("A", "B", "X", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
         when(employeeRepository.findByEmail("a@x.com")).thenReturn(Optional.of(e1));
 
         boolean result = service.deleteEmployee("a@x.com");
@@ -210,11 +211,11 @@ public class EmployeeServiceTest {
 
     @Test
     void getStatusDistribution_withEmployees_returnsDistribution() {
-        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
         e1.setStatus(EmploymentStatus.ACTIVE);
-        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, BigDecimal.valueOf(12000));
         e2.setStatus(EmploymentStatus.ACTIVE);
-        Employee e3 = new Employee("C", "C", "X", "c@x.com", Position.PROGRAMISTA, 9000);
+        Employee e3 = new Employee("C", "C", "X", "c@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(9000));
         e3.setStatus(EmploymentStatus.ON_LEAVE);
         when(employeeRepository.findAll()).thenReturn(List.of(e1, e2, e3));
 
@@ -225,7 +226,7 @@ public class EmployeeServiceTest {
 
     @Test
     void getEmployeesByStatus_withMatches_returnsFiltered() {
-        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
         e1.setStatus(EmploymentStatus.ON_LEAVE);
         when(employeeRepository.findByStatus(EmploymentStatus.ON_LEAVE)).thenReturn(List.of(e1));
 
@@ -245,8 +246,8 @@ public class EmployeeServiceTest {
 
     @Test
     void getEmployeesByDepartment_withMatches_returnsFiltered() {
-        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, BigDecimal.valueOf(12000));
         when(employeeRepository.findByDepartment_Id(1L)).thenReturn(List.of(e1, e2));
 
         List<Employee> result = service.getEmployeesByDepartment(1L);
@@ -265,8 +266,8 @@ public class EmployeeServiceTest {
 
     @Test
     void getAllEmployees_returnsAllEmployees() {
-        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, BigDecimal.valueOf(12000));
         when(employeeRepository.findAll()).thenReturn(List.of(e1, e2));
 
         List<Employee> result = service.getAllEmployees();
@@ -285,8 +286,8 @@ public class EmployeeServiceTest {
 
     @Test
     void getEmployeesByPosition_withMatches_returnsFiltered() {
-        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.PROGRAMISTA, 9000);
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(9000));
         when(employeeRepository.findAll()).thenReturn(List.of(e1, e2));
 
         Map<String, List<Employee>> result = service.getEmployeesByPosition();
@@ -297,14 +298,14 @@ public class EmployeeServiceTest {
 
     @Test
     void getHighestPaidEmployee_withEmployees_returnsHighest() {
-        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, BigDecimal.valueOf(12000));
         when(employeeRepository.findAll()).thenReturn(List.of(e1, e2));
 
         Optional<Employee> result = service.getHighestPaidEmployee();
 
         assertThat(result).isPresent();
-        assertThat(result.get().getSalary()).isEqualTo(12000);
+        assertThat(result.get().getSalary()).isEqualTo(BigDecimal.valueOf(12000));
     }
 
     @Test
@@ -318,8 +319,8 @@ public class EmployeeServiceTest {
 
     @Test
     void getAverageSalary_withEmployees_returnsAverage() {
-        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, BigDecimal.valueOf(12000));
         when(employeeRepository.findAll()).thenReturn(List.of(e1, e2));
 
         double result = service.getAverageSalary();
@@ -338,8 +339,8 @@ public class EmployeeServiceTest {
 
     @Test
     void getAverageSalaryByCompany_withEmployees_returnsAverage() {
-        Employee e1 = new Employee("A", "A", "Acme", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("B", "B", "Acme", "b@x.com", Position.MANAGER, 12000);
+        Employee e1 = new Employee("A", "A", "Acme", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
+        Employee e2 = new Employee("B", "B", "Acme", "b@x.com", Position.MANAGER, BigDecimal.valueOf(12000));
         when(employeeRepository.findAll()).thenReturn(List.of(e1, e2));
 
         double result = service.getAverageSalary("Acme");
@@ -358,7 +359,7 @@ public class EmployeeServiceTest {
 
     @Test
     void updateEmployeeStatus_found_updates() {
-        Employee e1 = new Employee("A", "B", "X", "a@x.com", Position.PROGRAMISTA, 8000);
+        Employee e1 = new Employee("A", "B", "X", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
         e1.setStatus(EmploymentStatus.ACTIVE);
         when(employeeRepository.findByEmail("a@x.com")).thenReturn(Optional.of(e1));
 
@@ -379,9 +380,9 @@ public class EmployeeServiceTest {
 
     @Test
     void getPositionStatistics_withEmployees_returnsStats() {
-        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, 12000);
-        Employee e3 = new Employee("C", "C", "X", "c@x.com", Position.PROGRAMISTA, 9000);
+        Employee e1 = new Employee("A", "A", "X", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
+        Employee e2 = new Employee("B", "B", "X", "b@x.com", Position.MANAGER, BigDecimal.valueOf(12000));
+        Employee e3 = new Employee("C", "C", "X", "c@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(9000));
         when(employeeRepository.findAll()).thenReturn(List.of(e1, e2, e3));
 
         Map<String, Integer> result = service.getPositionStatistics();
@@ -400,9 +401,9 @@ public class EmployeeServiceTest {
 
     @Test
     void getCompanyStatistics_withEmployees_returnsStats() {
-        Employee e1 = new Employee("A", "A", "Acme", "a@x.com", Position.PROGRAMISTA, 8000);
-        Employee e2 = new Employee("B", "B", "Acme", "b@x.com", Position.MANAGER, 12000);
-        Employee e3 = new Employee("C", "C", "TechCorp", "c@x.com", Position.PROGRAMISTA, 9000);
+        Employee e1 = new Employee("A", "A", "Acme", "a@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(8000));
+        Employee e2 = new Employee("B", "B", "Acme", "b@x.com", Position.MANAGER, BigDecimal.valueOf(12000));
+        Employee e3 = new Employee("C", "C", "TechCorp", "c@x.com", Position.PROGRAMISTA, BigDecimal.valueOf(9000));
         when(employeeRepository.findAll()).thenReturn(List.of(e1, e2, e3));
 
         Map<String, com.github.jakubpakula1.lab.model.CompanyStatistics> result = service.getCompanyStatistics();

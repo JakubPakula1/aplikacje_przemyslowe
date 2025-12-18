@@ -2,24 +2,26 @@ package com.github.jakubpakula1.lab.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+
+import java.math.BigDecimal;
 import java.util.Locale;
 
 public enum Position {
-    PREZES(25000, 1),
-    WICEPREZES(18000, 2),
-    MANAGER(12000, 3),
-    PROGRAMISTA(8000, 4),
-    STAZYSTA(3000, 5);
+    PREZES(BigDecimal.valueOf(25000.00), 1),
+    WICEPREZES(BigDecimal.valueOf(18000), 2),
+    MANAGER(BigDecimal.valueOf(12000), 3),
+    PROGRAMISTA(BigDecimal.valueOf(8000), 4),
+    STAZYSTA(BigDecimal.valueOf(3000), 5);
 
-    private final int baseSalary;
+    private final BigDecimal baseSalary;
     private final int hierarchyLevel;
 
-    Position(int baseSalary, int hierarchyLevel) {
+    Position(BigDecimal baseSalary, int hierarchyLevel) {
         this.baseSalary = baseSalary;
         this.hierarchyLevel = hierarchyLevel;
     }
 
-    public int getBaseSalary() { return baseSalary; }
+    public BigDecimal getBaseSalary() { return baseSalary; }
     public int getHierarchyLevel() { return hierarchyLevel; }
 
     @JsonValue

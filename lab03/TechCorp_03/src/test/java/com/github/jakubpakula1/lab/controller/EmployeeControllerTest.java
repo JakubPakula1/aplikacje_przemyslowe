@@ -16,6 +16,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -34,7 +35,7 @@ class EmployeeControllerTest {
     @MockBean
     private EmployeeService employeeService;
 
-    private Employee mockEmployee(String name, String surname, String email, String company, int salary, EmploymentStatus status) {
+    private Employee mockEmployee(String name, String surname, String email, String company, BigDecimal salary, EmploymentStatus status) {
         Employee e = mock(Employee.class);
         when(e.getName()).thenReturn(name);
         when(e.getSurname()).thenReturn(surname);
@@ -48,8 +49,8 @@ class EmployeeControllerTest {
     @Test
     @DisplayName("GET /api/employees - zwraca 200 i listę pracowników")
     void testGetAllEmployees() throws Exception {
-        Employee e1 = mockEmployee("John", "Doe", "john@example.com", "Acme", 5000, EmploymentStatus.ACTIVE);
-        Employee e2 = mockEmployee("Jane", "Smith", "jane@example.com", "Acme", 6000, EmploymentStatus.ON_LEAVE);
+        Employee e1 = mockEmployee("John", "Doe", "john@example.com", "Acme", BigDecimal.valueOf(5000), EmploymentStatus.ACTIVE);
+        Employee e2 = mockEmployee("Jane", "Smith", "jane@example.com", "Acme", BigDecimal.valueOf(6000), EmploymentStatus.ON_LEAVE);
 
         when(employeeService.getAllEmployees()).thenReturn(List.of(e1, e2));
 
@@ -65,7 +66,7 @@ class EmployeeControllerTest {
     @Test
     @DisplayName("GET /api/employees/{email} - zwraca pracownika")
     void testGetEmployeeByEmail() throws Exception {
-        Employee e = mockEmployee("John", "Doe", "john@example.com", "Acme", 5000, EmploymentStatus.ACTIVE);
+        Employee e = mockEmployee("John", "Doe", "john@example.com", "Acme", BigDecimal.valueOf(5000), EmploymentStatus.ACTIVE);
         when(employeeService.getEmployeeByEmail("john@example.com")).thenReturn(e);
 
         mockMvc.perform(get("/api/employees/john@example.com"))
@@ -102,7 +103,7 @@ class EmployeeControllerTest {
         createMap.put("salary", 5000);
         createMap.put("status", "ACTIVE");
 
-        Employee created = mockEmployee("John", "Doe", "john@techcorp.com", "Acme", 5000, EmploymentStatus.ACTIVE);
+        Employee created = mockEmployee("John", "Doe", "john@techcorp.com", "Acme", BigDecimal.valueOf(5000), EmploymentStatus.ACTIVE);
         when(employeeService.addEmployee(ArgumentMatchers.any())).thenReturn(created);
 
         mockMvc.perform(post("/api/employees")
@@ -154,7 +155,7 @@ class EmployeeControllerTest {
     @Test
     @DisplayName("GET /api/employees?company=... - filtrowanie po firmie")
     void testFilterByCompany() throws Exception {
-        Employee e = mockEmployee("Alice", "Wong", "alice@example.com", "Globex", 4500, EmploymentStatus.ACTIVE);
+        Employee e = mockEmployee("Alice", "Wong", "alice@example.com", "Globex", BigDecimal.valueOf(4500), EmploymentStatus.ACTIVE);
         when(employeeService.getCompanyEmployees("Globex")).thenReturn(List.of(e));
 
         mockMvc.perform(get("/api/employees").param("company", "Globex"))
@@ -172,7 +173,7 @@ class EmployeeControllerTest {
         StatusUpdateDTO dto = new StatusUpdateDTO();
         dto.setStatus(EmploymentStatus.ON_LEAVE);
 
-        Employee updated = mockEmployee("John", "Doe", "john@example.com", "Acme", 5000, EmploymentStatus.ON_LEAVE);
+        Employee updated = mockEmployee("John", "Doe", "john@example.com", "Acme", BigDecimal.valueOf(5000), EmploymentStatus.ON_LEAVE);
         when(employeeService.updateEmployeeStatus("john@example.com", EmploymentStatus.ON_LEAVE)).thenReturn(updated);
 
         mockMvc.perform(patch("/api/employees/john@example.com/status")
@@ -197,11 +198,11 @@ class EmployeeControllerTest {
             updateMap.put("salary", 7000);
             updateMap.put("status", "ACTIVE");
 
-            Employee existing = mockEmployee("John", "Doe", "john@techcorp.com", "Acme", 5000, EmploymentStatus.ACTIVE);
-            when(employeeService.getEmployeeByEmail("john@techcorp.com")).thenReturn(existing);
+        Employee existing = mockEmployee("John", "Doe", "john@techcorp.com", "Acme", BigDecimal.valueOf(5000), EmploymentStatus.ACTIVE);
+        when(employeeService.getEmployeeByEmail("john@techcorp.com")).thenReturn(existing);
 
-            Employee saved = mockEmployee("John", "Updated", "john.updated@techcorp.com", "Acme", 7000, EmploymentStatus.ACTIVE);
-            when(employeeService.updateEmployee(eq("john@techcorp.com"), ArgumentMatchers.any())).thenReturn(saved);
+        Employee saved = mockEmployee("John", "Updated", "john.updated@techcorp.com", "Acme", BigDecimal.valueOf(7000), EmploymentStatus.ACTIVE);
+        when(employeeService.updateEmployee(eq("john@techcorp.com"), ArgumentMatchers.any())).thenReturn(saved);
 
             mockMvc.perform(put("/api/employees/john@techcorp.com")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -227,7 +228,7 @@ class EmployeeControllerTest {
             updateMap.put("salary", 6000);
             updateMap.put("status", "ACTIVE");
 
-            Employee existing = mockEmployee("John", "Doe", "john@techcorp.com", "Acme", 5000, EmploymentStatus.ACTIVE);
+            Employee existing = mockEmployee("John", "Doe", "john@techcorp.com", "Acme", BigDecimal.valueOf(5000), EmploymentStatus.ACTIVE);
             when(employeeService.getEmployeeByEmail("john@techcorp.com")).thenReturn(existing);
 
             when(employeeService.updateEmployee(eq("john@techcorp.com"), ArgumentMatchers.any()))
@@ -316,7 +317,7 @@ class EmployeeControllerTest {
             createMap.put("position", "PROGRAMISTA");
             createMap.put("status", "ACTIVE");
 
-            Employee created = mockEmployee("John", "Doe", "john@techcorp.com", "Acme", 5000, EmploymentStatus.ACTIVE);
+            Employee created = mockEmployee("John", "Doe", "john@techcorp.com", "Acme", BigDecimal.valueOf(5000), EmploymentStatus.ACTIVE);
             when(employeeService.addEmployee(ArgumentMatchers.any())).thenReturn(created);
 
             mockMvc.perform(post("/api/employees")

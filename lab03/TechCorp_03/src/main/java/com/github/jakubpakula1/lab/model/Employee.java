@@ -2,6 +2,8 @@ package com.github.jakubpakula1.lab.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import com.github.jakubpakula1.lab.validation.TechCorpEmail;
+
+import java.math.BigDecimal;
 import java.util.Objects;
 @Entity
 @Table(name = "employees")
@@ -35,9 +37,9 @@ public class Employee {
     @NotNull(message = "Stanowisko nie może być puste")
     private Position position;
 
-    @Column(nullable = false)
+    @Column(nullable = false,precision = 19, scale = 2)
     @Positive(message = "Pensja musi być większa od 0")
-    private int salary;
+    private BigDecimal salary;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -51,11 +53,11 @@ public class Employee {
     @JoinColumn(name = "departament_id")
     private Department department;
 
-    protected Employee() {
+    public Employee() {
 
     }
 
-    public Employee(String name, String surname, String company, String email, Position position, int salary) {
+    public Employee(String name, String surname, String company, String email, Position position, BigDecimal salary) {
         this.name = name;
         this.surname = surname;
         this.company = company;
@@ -112,11 +114,11 @@ public class Employee {
         this.position = position;
     }
 
-    public int getSalary() {
+    public BigDecimal getSalary() {
         return salary;
     }
 
-    public void setSalary(int salary) {
+    public void setSalary(BigDecimal salary) {
         this.salary = salary;
     }
 
